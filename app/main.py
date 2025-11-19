@@ -1,7 +1,7 @@
 import sys
 from PyQt5.QtWidgets import QApplication, QLabel, QWidget, QVBoxLayout
-from login_window import LoginWindow
-
+from app.login_window import LoginWindow
+from app.database_init import initialize_database
 
 class MainApp(QWidget):
     def __init__(self, user_info):
@@ -23,6 +23,7 @@ class MainApp(QWidget):
 
 
 def main():
+    initialize_database()
     app = QApplication(sys.argv)
 
     def on_login_success(user_info):

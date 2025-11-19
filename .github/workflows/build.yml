@@ -32,7 +32,7 @@ jobs:
     - name: Build Executable
       run: |
         # Build a single-file exe named your_app.exe
-        pyinstaller --onefile --name your_app app/main.py
+        pyinstaller --onefile --name your_app --paths=./app app/main.py
 
     # Step 5: Upload the built executable as an artifact
     - name: Upload Artifact
