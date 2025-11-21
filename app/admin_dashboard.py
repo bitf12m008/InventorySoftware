@@ -7,6 +7,7 @@ import datetime
 from app.add_product_window import AddProductWindow
 from app.edit_product_window import EditProductWindow
 from app.adjust_stock_window import AdjustStockWindow
+from app.add_sale_window import AddSaleWindow
 from app.database_init import DB_PATH
 
 from PyQt5.QtWidgets import (
@@ -190,13 +191,8 @@ class AdminDashboard(QWidget):
         self.adjust_stock_window.show()
 
     def add_sale(self):
-        selected = self.table.currentRow()
-        if selected < 0:
-            QMessageBox.warning(self, "Select", "Please select a product to record sale.")
-            return
-        product_id = int(self.table.item(selected, 0).text())
-        shop_id = self.shop_combo.currentData()
-        QMessageBox.information(self, "Add Sale", f"Record sale for product {product_id} in shop {shop_id}")
+        self.add_sale_window = AddSaleWindow()
+        self.add_sale_window.show()
 
     def open_reports(self):
         # Export current table to CSV as a quick report example

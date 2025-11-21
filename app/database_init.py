@@ -71,14 +71,25 @@ def initialize_database():
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS Sales (
         sale_id INTEGER PRIMARY KEY AUTOINCREMENT,
-        product_id INTEGER NOT NULL,
         shop_id INTEGER NOT NULL,
-        quantity INTEGER NOT NULL,
-        price REAL NOT NULL,
-        total REAL NOT NULL,
         date TEXT NOT NULL,
-        FOREIGN KEY(product_id) REFERENCES Products(product_id),
+        grand_total REAL NOT NULL,
         FOREIGN KEY(shop_id) REFERENCES Shops(shop_id)
+    )
+    """)
+
+    # ------------------------------
+    # Sale Items
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS SaleItems (
+        sale_item_id INTEGER PRIMARY KEY AUTOINCREMENT,
+        sale_id INTEGER NOT NULL,
+        product_id INTEGER NOT NULL,
+        quantity INTEGER NOT NULL,
+        price_per_unit REAL NOT NULL,
+        line_total REAL NOT NULL,
+        FOREIGN KEY(sale_id) REFERENCES Sales(sale_id),
+        FOREIGN KEY(product_id) REFERENCES Products(product_id)
     )
     """)
 
