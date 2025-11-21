@@ -2,6 +2,9 @@ import sys
 from PyQt5.QtWidgets import QApplication, QLabel, QWidget, QVBoxLayout
 from app.login_window import LoginWindow
 from app.database_init import initialize_database
+from app.admin_dashboard import AdminDashboard
+
+app_state = {}
 
 class MainApp(QWidget):
     def __init__(self, user_info):
@@ -27,11 +30,15 @@ def main():
     app = QApplication(sys.argv)
 
     def on_login_success(user_info):
-        main_window = MainApp(user_info)
-        main_window.show()
+        if user_info.get("role") == "admin":
+            app_state["admin"] = AdminDashboard(user_info)
+            app_state["admin"].show()
+        else:
+            # load user-specific UI
+            pass
 
-    login = LoginWindow(on_login_success)
-    login.show()
+    app_state["login"] = LoginWindow(on_login_success)
+    app_state["login"].show()
 
     sys.exit(app.exec_())
 

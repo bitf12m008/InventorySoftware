@@ -2,15 +2,7 @@ import hashlib
 import sqlite3
 import os
 import sys
-
-def get_base_path():
-    if hasattr(sys, "_MEIPASS"):
-        return os.path.dirname(sys.executable)
-    return os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-
-BASE_DIR = get_base_path()
-DB_DIR = os.path.join(BASE_DIR, "database")
-DB_PATH = os.path.join(DB_DIR, "app.db")
+from app.database_init import DB_PATH
 
 class AuthService:
 

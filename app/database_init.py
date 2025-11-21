@@ -3,6 +3,9 @@ import os
 import sys
 import hashlib
 
+# -------------------------
+# DB path helper (EXE safe)
+# -------------------------
 def get_base_path():
     if hasattr(sys, "_MEIPASS"):
         return os.path.dirname(sys.executable)
@@ -40,36 +43,13 @@ def initialize_database():
     """)
 
     # ------------------------------
-    # Categories (global)
-    cursor.execute("""
-    CREATE TABLE IF NOT EXISTS Categories (
-        category_id INTEGER PRIMARY KEY AUTOINCREMENT,
-        name TEXT NOT NULL
-    )
-    """)
-
-    # ------------------------------
-    # ShopCategories (mapping categories to shops)
-    cursor.execute("""
-    CREATE TABLE IF NOT EXISTS ShopCategories (
-        shop_category_id INTEGER PRIMARY KEY AUTOINCREMENT,
-        shop_id INTEGER NOT NULL,
-        category_id INTEGER NOT NULL,
-        FOREIGN KEY(shop_id) REFERENCES Shops(shop_id),
-        FOREIGN KEY(category_id) REFERENCES Categories(category_id)
-    )
-    """)
-
-    # ------------------------------
-    # Products (belong to a category, global)
+    # Products (global, without category)
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS Products (
         product_id INTEGER PRIMARY KEY AUTOINCREMENT,
-        category_id INTEGER NOT NULL,
         name TEXT NOT NULL,
         purchase_price REAL NOT NULL,
-        sale_price REAL NOT NULL,
-        FOREIGN KEY(category_id) REFERENCES Categories(category_id)
+        sale_price REAL NOT NULL
     )
     """)
 
@@ -142,6 +122,14 @@ def initialize_database():
                        ("admin", password_hash, "admin"))
         conn.commit()
         print("Default admin user created: username='admin', password='admin123'")
+
+    cursor.execute("SELECT COUNT(*) FROM Shops")
+    if cursor.fetchone()[0] == 0:
+        default_shops = ["Shop 1", "Shop 2", "Shop 3", "Shop 4"]
+        for s in default_shops:
+            cursor.execute("INSERT INTO Shops (shop_name) VALUES (?)", (s,))
+        conn.commit()
+        print("Default shops added.")
 
     conn.close()
     print("Database initialized successfully!")
