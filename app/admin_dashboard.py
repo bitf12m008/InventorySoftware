@@ -5,6 +5,8 @@ import sqlite3
 import csv
 import datetime
 from app.add_product_window import AddProductWindow
+from app.edit_product_window import EditProductWindow
+from app.adjust_stock_window import AdjustStockWindow
 from app.database_init import DB_PATH
 
 from PyQt5.QtWidgets import (
@@ -172,7 +174,9 @@ class AdminDashboard(QWidget):
             QMessageBox.warning(self, "Select", "Please select a product to edit.")
             return
         product_id = int(self.table.item(selected, 0).text())
-        QMessageBox.information(self, "Edit Product", f"Open edit dialog for product_id={product_id}")
+        self.edit_product_window = EditProductWindow(product_id)
+        self.edit_product_window.show()
+
 
     def adjust_stock(self):
         selected = self.table.currentRow()
@@ -181,7 +185,9 @@ class AdminDashboard(QWidget):
             return
         product_id = int(self.table.item(selected, 0).text())
         shop_id = self.shop_combo.currentData()
-        QMessageBox.information(self, "Adjust Stock", f"Adjust stock for product {product_id} in shop {shop_id}")
+        product_name = self.table.item(selected, 1).text()
+        self.adjust_stock_window = AdjustStockWindow(product_id, shop_id, product_name)
+        self.adjust_stock_window.show()
 
     def add_sale(self):
         selected = self.table.currentRow()
