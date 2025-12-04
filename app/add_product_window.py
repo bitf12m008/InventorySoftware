@@ -1,51 +1,144 @@
+# app/add_product_window.py
+
 from PyQt5.QtWidgets import (
     QWidget, QLabel, QVBoxLayout, QLineEdit, QPushButton,
-    QMessageBox, QListWidget, QListWidgetItem, QCheckBox
+    QMessageBox, QListWidget, QListWidgetItem, QCheckBox,
+    QFrame, QStyle, QHBoxLayout
 )
 from PyQt5.QtCore import Qt
+from PyQt5.QtGui import QFont
 import sqlite3
 from app.database_init import DB_PATH
+
 
 class AddProductWindow(QWidget):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("Add Product")
-        self.setFixedSize(400, 400)
+
+        self.setWindowTitle("Add New Product")
+        self.setFixedSize(440, 500)
+        self.setStyleSheet("background-color: #f2f3f5;")
 
         self.setup_ui()
         self.load_shops()
 
     def setup_ui(self):
-        layout = QVBoxLayout()
+        main = QVBoxLayout()
+        main.setContentsMargins(20, 20, 20, 20)
+        main.setSpacing(15)
 
-        # Product Name
-        layout.addWidget(QLabel("Product Name:"))
+        # ------------------ Card ------------------
+        card = QFrame()
+        card.setStyleSheet("""
+            QFrame {
+                background: white;
+                border-radius: 10px;
+                border: 1px solid #cccccc;
+            }
+        """)
+        card_layout = QVBoxLayout()
+        card_layout.setContentsMargins(22, 22, 22, 22)
+        card_layout.setSpacing(14)
+
+        # ------------------ Title ------------------
+        title = QLabel("Add Product")
+        title.setFont(QFont("Segoe UI", 18, QFont.Bold))
+        title.setAlignment(Qt.AlignCenter)
+        title.setStyleSheet("color: #222; margin-bottom: -5px;")
+        card_layout.addWidget(title)
+
+        subtitle = QLabel("Create a new product and assign it to shops")
+        subtitle.setFont(QFont("Segoe UI", 10))
+        subtitle.setAlignment(Qt.AlignCenter)
+        subtitle.setStyleSheet("color: #666;")
+        card_layout.addWidget(subtitle)
+
+        # Soft separator
+        sep = QFrame()
+        sep.setFrameShape(QFrame.HLine)
+        sep.setStyleSheet("color: #e1e1e1; margin-bottom: 5px;")
+        card_layout.addWidget(sep)
+
+        # ------------------ Product Name ------------------
+        label_name = QLabel("Product Name")
+        label_name.setFont(QFont("Segoe UI", 11))
+        card_layout.addWidget(label_name)
+
         self.name_input = QLineEdit()
-        layout.addWidget(self.name_input)
+        self.name_input.setPlaceholderText("Enter product name")
+        self.name_input.setStyleSheet("""
+            QLineEdit {
+                padding: 9px;
+                border-radius: 6px;
+                border: 1px solid #bfc3c7;
+                background: #fafafa;
+            }
+            QLineEdit:focus {
+                border: 1px solid #0078d4;
+                background: white;
+            }
+        """)
+        card_layout.addWidget(self.name_input)
 
-        # Purchase Price
-        layout.addWidget(QLabel("Purchase Price:"))
-        self.purchase_input = QLineEdit()
-        layout.addWidget(self.purchase_input)
+        # ------------------ Shops ------------------
+        label_shop = QLabel("Assign to Shops")
+        label_shop.setFont(QFont("Segoe UI", 11))
+        card_layout.addWidget(label_shop)
 
-        # Sale Price
-        layout.addWidget(QLabel("Sale Price:"))
-        self.sale_input = QLineEdit()
-        layout.addWidget(self.sale_input)
+        list_container = QFrame()
+        list_container.setStyleSheet("""
+            QFrame {
+                border: 1px solid #d0d0d0;
+                border-radius: 5px;
+                background: #f7f7f7;
+            }
+        """)
+        list_layout = QVBoxLayout()
+        list_layout.setContentsMargins(4, 4, 4, 4)
 
-        # Shops list (Checkbox list)
-        layout.addWidget(QLabel("Assign Product to Shops:"))
         self.shop_list = QListWidget()
+        self.shop_list.setStyleSheet("""
+            QListWidget {
+                border: none;
+                background: transparent;
+            }
+            QCheckBox {
+                padding: 3px;
+                font-size: 13px;
+            }
+        """)
         self.shop_list.setSelectionMode(QListWidget.NoSelection)
-        layout.addWidget(self.shop_list)
+        list_layout.addWidget(self.shop_list)
+        list_container.setLayout(list_layout)
 
-        # Submit Button
+        card_layout.addWidget(list_container)
+
+        # ------------------ Button ------------------
         add_btn = QPushButton("Add Product")
+        add_btn.setIcon(self.style().standardIcon(QStyle.SP_DialogOkButton))
+        add_btn.setStyleSheet("""
+            QPushButton {
+                background-color: #0078d4;
+                color: white;
+                padding: 10px;
+                font-size: 14px;
+                border-radius: 6px;
+                font-weight: bold;
+            }
+            QPushButton:hover {
+                background-color: #0063b1;
+            }
+        """)
         add_btn.clicked.connect(self.save_product)
-        layout.addWidget(add_btn)
 
-        self.setLayout(layout)
+        card_layout.addSpacing(6)
+        card_layout.addWidget(add_btn)
 
+        card.setLayout(card_layout)
+        main.addWidget(card)
+        self.setLayout(main)
+
+    # ------------------ Load shops ------------------
     def load_shops(self):
         conn = sqlite3.connect(DB_PATH)
         c = conn.cursor()
@@ -60,27 +153,22 @@ class AddProductWindow(QWidget):
             self.shop_list.addItem(item)
             self.shop_list.setItemWidget(item, checkbox)
 
+    # ------------------ Save product ------------------
     def save_product(self):
-        name = self.name_input.text()
-        purchase = self.purchase_input.text()
-        sale = self.sale_input.text()
+        name = self.name_input.text().strip()
 
-        if not name or not purchase or not sale:
-            QMessageBox.warning(self, "Error", "All fields are required!")
+        if not name:
+            QMessageBox.warning(self, "Missing Name", "Please enter a product name.")
             return
 
         conn = sqlite3.connect(DB_PATH)
         c = conn.cursor()
 
-        # Add product
-        c.execute("""
-            INSERT INTO Products (name, purchase_price, sale_price)
-            VALUES (?, ?, ?)
-        """, (name, float(purchase), float(sale)))
-
+        # Insert product
+        c.execute("INSERT INTO Products (name) VALUES (?)", (name,))
         product_id = c.lastrowid
 
-        # Add stock entries for selected shops
+        # Assign stock entries to selected shops
         for i in range(self.shop_list.count()):
             item = self.shop_list.item(i)
             checkbox = self.shop_list.itemWidget(item)
@@ -94,5 +182,5 @@ class AddProductWindow(QWidget):
         conn.commit()
         conn.close()
 
-        QMessageBox.information(self, "Success", "Product added successfully!")
+        QMessageBox.information(self, "Success", "Product added successfully.")
         self.close()

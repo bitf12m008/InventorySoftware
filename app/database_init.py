@@ -1,11 +1,10 @@
+# app/database_init.py
 import sqlite3
 import os
 import sys
 import hashlib
 
-# -------------------------
-# DB path helper (EXE safe)
-# -------------------------
+# EXE-safe base path
 def get_base_path():
     if hasattr(sys, "_MEIPASS"):
         return os.path.dirname(sys.executable)
@@ -18,11 +17,10 @@ os.makedirs(DB_DIR, exist_ok=True)
 DB_PATH = os.path.join(DB_DIR, "app.db")
 
 def initialize_database():
-    os.makedirs("database", exist_ok=True)
+    os.makedirs(DB_DIR, exist_ok=True)
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
 
-    # ------------------------------
     # Shops
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS Shops (
@@ -31,29 +29,24 @@ def initialize_database():
     )
     """)
 
-    # ------------------------------
     # Users
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS Users (
         user_id INTEGER PRIMARY KEY AUTOINCREMENT,
         username TEXT UNIQUE NOT NULL,
         password_hash TEXT NOT NULL,
-        role TEXT NOT NULL  -- "admin" or "user"
+        role TEXT NOT NULL
     )
     """)
 
-    # ------------------------------
-    # Products (global, without category)
+    # Products (master)
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS Products (
         product_id INTEGER PRIMARY KEY AUTOINCREMENT,
-        name TEXT NOT NULL,
-        purchase_price REAL NOT NULL,
-        sale_price REAL NOT NULL
+        name TEXT NOT NULL
     )
     """)
 
-    # ------------------------------
     # Stock (per shop)
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS Stock (
@@ -66,8 +59,7 @@ def initialize_database():
     )
     """)
 
-    # ------------------------------
-    # Sales
+    # Sales (invoice header)
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS Sales (
         sale_id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -78,8 +70,7 @@ def initialize_database():
     )
     """)
 
-    # ------------------------------
-    # Sale Items
+    # SaleItems (invoice lines)
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS SaleItems (
         sale_item_id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -93,7 +84,6 @@ def initialize_database():
     )
     """)
 
-    # ------------------------------
     # Purchases
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS Purchases (
@@ -109,8 +99,7 @@ def initialize_database():
     )
     """)
 
-    # ------------------------------
-    # Receipts
+    # Receipts (paths for generated receipts)
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS Receipts (
         receipt_id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -123,8 +112,7 @@ def initialize_database():
 
     conn.commit()
 
-    # ------------------------------
-    # Create default admin user if not exists
+    # default admin
     cursor.execute("SELECT * FROM Users WHERE username='admin'")
     if cursor.fetchone() is None:
         password = "admin123"
@@ -134,8 +122,10 @@ def initialize_database():
         conn.commit()
         print("Default admin user created: username='admin', password='admin123'")
 
+    # default shops
     cursor.execute("SELECT COUNT(*) FROM Shops")
-    if cursor.fetchone()[0] == 0:
+    row = cursor.fetchone()
+    if row is None or row[0] == 0:
         default_shops = ["Shop 1", "Shop 2", "Shop 3", "Shop 4"]
         for s in default_shops:
             cursor.execute("INSERT INTO Shops (shop_name) VALUES (?)", (s,))
