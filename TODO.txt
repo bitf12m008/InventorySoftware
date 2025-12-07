@@ -1,1 +1,16 @@
+Understand and Refactor existing implementation
+
+profit loss per inventory
+
+profit loss weekly sale report
+
+database backup plans [local, cloud, auto, by admin etc..]
+
 Beautify UI
+
+add other accounts [for staff, for admin already exist]
+
+
+============================================
+
+Handwritten bills
