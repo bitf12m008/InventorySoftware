@@ -5,7 +5,7 @@ from PyQt5.QtWidgets import (
     QPushButton, QTableWidget, QTableWidgetItem, QMessageBox, QSpinBox
 )
 from PyQt5.QtCore import Qt
-from app.database_init import DB_PATH
+from app.db.database_init import DB_PATH
 
 def get_connection():
     conn = sqlite3.connect(DB_PATH); conn.row_factory = sqlite3.Row; return conn

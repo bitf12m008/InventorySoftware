@@ -1,8 +1,8 @@
 import sys
 from PyQt5.QtWidgets import QApplication, QLabel, QWidget, QVBoxLayout
-from app.login_window import LoginWindow
-from app.database_init import initialize_database
-from app.admin_dashboard import AdminDashboard
+from app.views.login_window import LoginWindow
+from app.db.database_init import initialize_database
+from app.views.admin_dashboard import AdminDashboard
 
 app_state = {}
 

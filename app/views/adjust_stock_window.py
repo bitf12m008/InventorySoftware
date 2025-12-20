@@ -1,7 +1,7 @@
 # app/adjust_stock_window.py
 import sqlite3
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QLabel, QSpinBox, QPushButton, QMessageBox, QHBoxLayout
-from app.database_init import DB_PATH
+from app.db.database_init import DB_PATH
 
 class AdjustStockWindow(QWidget):
     def __init__(self, product_id, shop_id, product_name):

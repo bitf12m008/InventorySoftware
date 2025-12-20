@@ -1,7 +1,7 @@
 # app/edit_product_window.py
 import sqlite3
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QLabel, QLineEdit, QPushButton, QMessageBox
-from app.database_init import DB_PATH
+from app.db.database_init import DB_PATH
 
 class EditProductWindow(QWidget):
     def __init__(self, product_id):

@@ -6,7 +6,7 @@ from PyQt5.QtWidgets import (
     QDateEdit, QTableWidget, QTableWidgetItem, QMessageBox
 )
 from PyQt5.QtCore import Qt, QDate
-from app.database_init import DB_PATH
+from app.db.database_init import DB_PATH
 
 
 # ----------------------------

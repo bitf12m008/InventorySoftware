@@ -5,7 +5,7 @@ from PyQt5.QtWidgets import (
     QWidget, QVBoxLayout, QLabel, QTableWidget, QTableWidgetItem, QMessageBox
 )
 from PyQt5.QtCore import Qt
-from app.database_init import DB_PATH
+from app.db.database_init import DB_PATH
 
 
 def get_connection():

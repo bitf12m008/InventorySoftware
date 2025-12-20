@@ -2,7 +2,7 @@ import hashlib
 import sqlite3
 import os
 import sys
-from app.database_init import DB_PATH
+from app.db.database_init import DB_PATH
 
 class AuthService:
 

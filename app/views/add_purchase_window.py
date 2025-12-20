@@ -6,7 +6,7 @@ from PyQt5.QtWidgets import (
     QTableWidget, QTableWidgetItem, QSpinBox, QLineEdit, QMessageBox, QHeaderView
 )
 from PyQt5.QtCore import Qt
-from app.database_init import DB_PATH
+from app.db.database_init import DB_PATH
 
 
 class AddPurchaseWindow(QWidget):

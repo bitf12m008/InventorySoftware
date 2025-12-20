@@ -8,7 +8,7 @@ from PyQt5.QtWidgets import (
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont
 import sqlite3
-from app.database_init import DB_PATH
+from app.db.database_init import DB_PATH
 
 
 class AddProductWindow(QWidget):

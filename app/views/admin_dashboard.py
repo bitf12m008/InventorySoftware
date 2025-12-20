@@ -6,15 +6,15 @@ import sqlite3
 import csv
 import datetime
 
-from app.add_product_window import AddProductWindow
-from app.edit_product_window import EditProductWindow
-from app.adjust_stock_window import AdjustStockWindow
-from app.add_sale_window import AddSaleWindow
-from app.add_purchase_window import AddPurchaseWindow
-from app.show_sales_window import ShowSalesWindow
-from app.profit_report_window import ProfitReportWindow
+from app.views.add_product_window import AddProductWindow
+from app.views.edit_product_window import EditProductWindow
+from app.views.adjust_stock_window import AdjustStockWindow
+from app.views.add_sale_window import AddSaleWindow
+from app.views.add_purchase_window import AddPurchaseWindow
+from app.views.show_sales_window import ShowSalesWindow
+from app.views.profit_report_window import ProfitReportWindow
 
-from app.database_init import DB_PATH
+from app.db.database_init import DB_PATH
 
 from PyQt5.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
