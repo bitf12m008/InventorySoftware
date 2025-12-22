@@ -7,8 +7,9 @@ from PyQt5.QtWidgets import (
 )
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont
-import sqlite3
-from app.db.database_init import DB_PATH
+from app.models.shop_model import ShopModel
+from app.models.product_model import ProductModel
+from app.models.stock_model import StockModel
 
 
 class AddProductWindow(QWidget):
@@ -140,11 +141,7 @@ class AddProductWindow(QWidget):
 
     # ------------------ Load shops ------------------
     def load_shops(self):
-        conn = sqlite3.connect(DB_PATH)
-        c = conn.cursor()
-        c.execute("SELECT shop_id, shop_name FROM Shops")
-        shops = c.fetchall()
-        conn.close()
+        shops = ShopModel.get_all()
 
         for sid, name in shops:
             item = QListWidgetItem()
@@ -161,12 +158,7 @@ class AddProductWindow(QWidget):
             QMessageBox.warning(self, "Missing Name", "Please enter a product name.")
             return
 
-        conn = sqlite3.connect(DB_PATH)
-        c = conn.cursor()
-
-        # Insert product
-        c.execute("INSERT INTO Products (name) VALUES (?)", (name,))
-        product_id = c.lastrowid
+        product_id = ProductModel.create(name)
 
         # Assign stock entries to selected shops
         for i in range(self.shop_list.count()):
@@ -174,13 +166,8 @@ class AddProductWindow(QWidget):
             checkbox = self.shop_list.itemWidget(item)
             if checkbox.isChecked():
                 shop_id = checkbox.property("shop_id")
-                c.execute("""
-                    INSERT INTO Stock (product_id, shop_id, quantity)
-                    VALUES (?, ?, 0)
-                """, (product_id, shop_id))
+                StockModel.create(product_id, shop_id, 0)
 
-        conn.commit()
-        conn.close()
 
         QMessageBox.information(self, "Success", "Product added successfully.")
         self.close()

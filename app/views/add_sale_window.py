@@ -1,23 +1,15 @@
 # app/add_sale_window.py
-import sqlite3, datetime
 from PyQt5.QtWidgets import (
     QWidget, QLabel, QVBoxLayout, QHBoxLayout, QComboBox, QLineEdit,
     QPushButton, QTableWidget, QTableWidgetItem, QMessageBox, QSpinBox
 )
 from PyQt5.QtCore import Qt
-from app.db.database_init import DB_PATH
+import datetime
+from app.models.shop_model import ShopModel
+from app.models.stock_model import StockModel
+from app.models.sale_model import SaleModel
+from app.models.sale_item_model import SaleItemModel
 
-def get_connection():
-    conn = sqlite3.connect(DB_PATH); conn.row_factory = sqlite3.Row; return conn
-
-def fetch_shops():
-    conn = get_connection(); cur = conn.cursor(); cur.execute("SELECT shop_id, shop_name FROM Shops ORDER BY shop_name"); rows = cur.fetchall(); conn.close(); return rows
-
-def fetch_products_for_shop(shop_id):
-    conn = get_connection(); cur = conn.cursor()
-    cur.execute("""SELECT p.product_id, p.name AS product_name, COALESCE(s.quantity,0) AS stock
-                   FROM Products p JOIN Stock s ON p.product_id = s.product_id WHERE s.shop_id = ? ORDER BY p.name""", (shop_id,))
-    rows = cur.fetchall(); conn.close(); return rows
 
 class AddSaleWindow(QWidget):
     def __init__(self, parent=None):
@@ -51,21 +43,26 @@ class AddSaleWindow(QWidget):
 
     def load_shops(self):
         self.shop_combo.clear()
-        shops = fetch_shops()
-        for s in shops: self.shop_combo.addItem(s["shop_name"], s["shop_id"])
-        if shops: self.shop_combo.setCurrentIndex(0)
+        shops = ShopModel.get_all()
+        for sid, name in shops:
+            self.shop_combo.addItem(name, sid)
+        if shops:
+            self.shop_combo.setCurrentIndex(0)
 
     def on_shop_changed(self, idx):
         shop_id = self.shop_combo.currentData(); self.load_products(shop_id); self.clear_cart()
 
     def load_products(self, shop_id):
         self.product_combo.clear()
-        if shop_id is None: return
-        rows = fetch_products_for_shop(shop_id)
-        for r in rows:
-            self.product_combo.addItem(f"{r['product_name']} (stock: {r['stock']})",
-                                       dict(product_id=r["product_id"], stock=r["stock"], name=r["product_name"]))
-        if self.product_combo.count()>0: self.product_combo.setCurrentIndex(0)
+        if shop_id is None:
+            return
+
+        rows = StockModel.get_products_for_shop(shop_id)
+        for pid, name, qty in rows:
+            self.product_combo.addItem(
+                f"{name} (stock: {qty})",
+                {"product_id": pid, "name": name, "stock": qty}
+            )
 
     def on_product_changed(self, idx):
         self.price_display.clear(); data=self.product_combo.currentData()
@@ -111,27 +108,50 @@ class AddSaleWindow(QWidget):
         self.cart=[]; self.refresh_cart_table(); self.update_total()
 
     def on_save_sale(self):
-        if not self.cart: QMessageBox.warning(self,"Empty","Add products"); return
+        if not self.cart:
+            QMessageBox.warning(self, "Empty", "Add products")
+            return
+
         shop_id = self.shop_combo.currentData()
-        if shop_id is None: QMessageBox.warning(self,"No shop","Select shop"); return
-        conn = get_connection(); cur = conn.cursor()
-        # validate stock again
+        if shop_id is None:
+            QMessageBox.warning(self, "No shop", "Select shop")
+            return
+
+        # Validate stock
         for item in self.cart:
-            cur.execute("SELECT quantity FROM Stock WHERE product_id=? AND shop_id=?", (item["product_id"], shop_id))
-            r = cur.fetchone()
-            if r is None or item["qty"]>r["quantity"]:
-                conn.close(); QMessageBox.critical(self,"Stock error",f"Not enough stock for {item['name']}"); return
+            available = StockModel.get_for_product(item["product_id"], shop_id)
+            if item["qty"] > available:
+                QMessageBox.critical(
+                    self,
+                    "Stock error",
+                    f"Not enough stock for {item['name']}"
+                )
+                return
+
+        total = sum(i["subtotal"] for i in self.cart)
+        now = datetime.datetime.now().isoformat()
+
         try:
-            grand_total = sum(i["subtotal"] for i in self.cart)
-            now = datetime.datetime.now().isoformat()
-            cur.execute("INSERT INTO Sales (shop_id, date, grand_total) VALUES (?, ?, ?)", (shop_id, now, grand_total))
-            sale_id = cur.lastrowid
+            sale_id = SaleModel.create(shop_id, total, now)
+
             for item in self.cart:
-                cur.execute("INSERT INTO SaleItems (sale_id, product_id, quantity, price_per_unit, line_total) VALUES (?, ?, ?, ?, ?)",
-                            (sale_id, item["product_id"], item["qty"], item["price"], item["subtotal"]))
-                cur.execute("UPDATE Stock SET quantity = quantity - ? WHERE product_id = ? AND shop_id = ?",
-                            (item["qty"], item["product_id"], shop_id))
-            conn.commit(); conn.close()
-            QMessageBox.information(self,"Saved",f"Sale saved (Invoice #{sale_id})"); self.clear_cart(); self.load_products(shop_id)
+                SaleItemModel.create(
+                    sale_id,
+                    item["product_id"],
+                    item["qty"],
+                    item["price"],
+                    item["subtotal"]
+                )
+                StockModel.reduce(item["product_id"], shop_id, item["qty"])
+
+            QMessageBox.information(
+                self,
+                "Saved",
+                f"Sale saved (Invoice #{sale_id})"
+            )
+
+            self.clear_cart()
+            self.load_products(shop_id)
+
         except Exception as e:
-            conn.rollback(); conn.close(); QMessageBox.critical(self,"Error",f"Failed to save sale: {e}")
+            QMessageBox.critical(self, "Error", f"Failed to save sale: {e}")

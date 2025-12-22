@@ -6,7 +6,10 @@ from PyQt5.QtWidgets import (
     QTableWidget, QTableWidgetItem, QSpinBox, QLineEdit, QMessageBox, QHeaderView
 )
 from PyQt5.QtCore import Qt
-from app.db.database_init import DB_PATH
+from app.models.shop_model import ShopModel
+from app.models.product_model import ProductModel
+from app.models.stock_model import StockModel
+from app.models.purchase_model import PurchaseModel
 
 
 class AddPurchaseWindow(QWidget):
@@ -29,21 +32,13 @@ class AddPurchaseWindow(QWidget):
     # Load shops
     # --------------------------
     def load_shops(self):
-        conn = sqlite3.connect(DB_PATH)
-        c = conn.cursor()
-        c.execute("SELECT shop_id, shop_name FROM Shops")
-        self.shops = c.fetchall()
-        conn.close()
+        self.shops = ShopModel.get_all()
 
     # --------------------------
     # Load products
     # --------------------------
     def load_products(self):
-        conn = sqlite3.connect(DB_PATH)
-        c = conn.cursor()
-        c.execute("SELECT product_id, name FROM Products ORDER BY name")
-        self.products = c.fetchall()
-        conn.close()
+        self.products = ProductModel.get_all()
 
     # --------------------------
     # Create top section
@@ -144,16 +139,6 @@ class AddPurchaseWindow(QWidget):
         self.grand_total_label.setText(f"Grand Total: {total}")
 
     # --------------------------
-    # FIND PRODUCT BY NAME
-    # --------------------------
-    def find_product_by_name(self, name):
-        name = name.strip().lower()
-        for pid, pname in self.products:
-            if pname.lower() == name:
-                return pid
-        return None
-
-    # --------------------------
     # SAVE PURCHASE
     # --------------------------
     def save_purchase(self):
@@ -163,73 +148,32 @@ class AddPurchaseWindow(QWidget):
             QMessageBox.warning(self, "Error", "Add at least one product.")
             return
 
-        conn = sqlite3.connect(DB_PATH)
-        c = conn.cursor()
-
         for row in range(self.table.rowCount()):
-            # Product field
             dropdown = self.table.cellWidget(row, 0)
             typed_name = dropdown.currentText().strip()
-            selected_id = dropdown.currentData()
 
-            # Detect if typed name matches an existing product
-            matched_id = self.find_product_by_name(typed_name)
+            product_id = ProductModel.find_by_name(typed_name)
 
-            if matched_id:
-                product_id = matched_id
-            else:
-                # NEW PRODUCT
-                c.execute("INSERT INTO Products (name) VALUES (?)", (typed_name,))
-                product_id = c.lastrowid
-
-                # Create stock entry
-                c.execute("""
-                    INSERT INTO Stock (product_id, shop_id, quantity)
-                    VALUES (?, ?, 0)
-                """, (product_id, shop_id))
-
-                # Refresh product list
+            if not product_id:
+                product_id = ProductModel.create(typed_name)
+                StockModel.create(product_id, shop_id, 0)
                 self.load_products()
 
-            # Qty
             qty = self.table.cellWidget(row, 1).value()
-
-            # Price
             price_text = self.table.cellWidget(row, 2).text().strip()
+
             if not price_text:
                 QMessageBox.warning(self, "Error", f"Missing price in row {row+1}.")
-                conn.close()
                 return
 
             try:
                 price = float(price_text)
             except:
                 QMessageBox.warning(self, "Error", f"Invalid price in row {row+1}.")
-                conn.close()
                 return
 
-            total = qty * price
-
-            # Save purchase
-            c.execute("""
-                INSERT INTO Purchases (product_id, shop_id, quantity, price, total, date)
-                VALUES (?, ?, ?, ?, ?, date('now'))
-            """, (product_id, shop_id, qty, price, total))
-
-            # Update stock
-            c.execute("""
-                UPDATE Stock SET quantity = quantity + ?
-                WHERE product_id=? AND shop_id=?
-            """, (qty, product_id, shop_id))
-
-            if c.rowcount == 0:
-                c.execute("""
-                    INSERT INTO Stock (product_id, shop_id, quantity)
-                    VALUES (?, ?, ?)
-                """, (product_id, shop_id, qty))
-
-        conn.commit()
-        conn.close()
+            PurchaseModel.create(product_id, shop_id, qty, price)
+            StockModel.increase(product_id, shop_id, qty)
 
         QMessageBox.information(self, "Success", "Purchase recorded successfully!")
         self.close()

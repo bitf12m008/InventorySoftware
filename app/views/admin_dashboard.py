@@ -2,7 +2,6 @@
 
 import sys
 import os
-import sqlite3
 import csv
 import datetime
 
@@ -14,8 +13,6 @@ from app.views.add_purchase_window import AddPurchaseWindow
 from app.views.show_sales_window import ShowSalesWindow
 from app.views.profit_report_window import ProfitReportWindow
 
-from app.db.database_init import DB_PATH
-
 from PyQt5.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
     QComboBox, QTableWidget, QTableWidgetItem, QMessageBox,
@@ -23,85 +20,10 @@ from PyQt5.QtWidgets import (
 )
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont, QColor
-
-
-# ---------------------------------------------------
-# DB Helpers
-# ---------------------------------------------------
-def get_connection():
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
-    return conn
-
-
-def fetch_shops():
-    conn = get_connection()
-    cur = conn.cursor()
-    cur.execute("SELECT shop_id, shop_name FROM Shops ORDER BY shop_name")
-    rows = cur.fetchall()
-    conn.close()
-    return rows
-
-
-def fetch_products_with_stock(shop_id):
-    conn = get_connection()
-    cur = conn.cursor()
-    cur.execute("""
-        SELECT p.product_id, p.name AS product_name, s.quantity
-        FROM Products p
-        JOIN Stock s ON p.product_id = s.product_id
-        WHERE s.shop_id = ?
-        ORDER BY p.name
-    """, (shop_id,))
-    rows = cur.fetchall()
-    conn.close()
-    return rows
-
-
-def get_last_purchase_price(product_id, shop_id):
-    conn = get_connection()
-    cur = conn.cursor()
-    cur.execute("""
-        SELECT price FROM Purchases
-        WHERE product_id=? AND shop_id=?
-        ORDER BY purchase_id DESC
-        LIMIT 1
-    """, (product_id, shop_id))
-    row = cur.fetchone()
-    conn.close()
-    return row["price"] if row else None
-
-
-def get_avg_purchase_price(product_id, shop_id):
-    conn = get_connection()
-    cur = conn.cursor()
-    cur.execute("""
-        SELECT SUM(quantity * price) AS total_cost, SUM(quantity) AS total_qty
-        FROM Purchases
-        WHERE product_id=? AND shop_id=?
-    """, (product_id, shop_id))
-    row = cur.fetchone()
-    conn.close()
-    if row and row["total_qty"]:
-        return row["total_cost"] / row["total_qty"]
-    return None
-
-
-def get_last_sale_price(product_id, shop_id):
-    conn = get_connection()
-    cur = conn.cursor()
-    cur.execute("""
-        SELECT si.price_per_unit
-        FROM SaleItems si
-        JOIN Sales s ON s.sale_id = si.sale_id
-        WHERE si.product_id=? AND s.shop_id=?
-        ORDER BY si.sale_item_id DESC
-        LIMIT 1
-    """, (product_id, shop_id))
-    row = cur.fetchone()
-    conn.close()
-    return row["price_per_unit"] if row else None
-
+from app.models.shop_model import ShopModel
+from app.models.product_model import ProductModel
+from app.models.purchase_model import PurchaseModel
+from app.models.sale_model import SaleModel
 
 # ---------------------------------------------------
 # Admin Dashboard
@@ -238,7 +160,7 @@ class AdminDashboard(QWidget):
     # ---------------------------------------------------
     def load_shops(self):
         self.shop_combo.clear()
-        shops = fetch_shops()
+        shops = ShopModel.get_all()
 
         for s in shops:
             self.shop_combo.addItem(s["shop_name"], s["shop_id"])
@@ -263,7 +185,7 @@ class AdminDashboard(QWidget):
             self.table.setRowCount(0)
             return
 
-        products = fetch_products_with_stock(shop_id)
+        products = ProductModel.get_by_shop(shop_id)
 
         # Load into table
         self.table.setRowCount(len(products))
@@ -272,9 +194,9 @@ class AdminDashboard(QWidget):
             pid = p["product_id"]
             qty = p["quantity"]
 
-            avg_cost = get_avg_purchase_price(pid, shop_id)
-            last_purchase = get_last_purchase_price(pid, shop_id)
-            last_sale = get_last_sale_price(pid, shop_id)
+            avg_cost = PurchaseModel.avg_price(pid, shop_id)
+            last_purchase = PurchaseModel.last_price(pid, shop_id)
+            last_sale = SaleModel.last_price(pid, shop_id)
 
             # Profit color
             if last_purchase is None or last_sale is None:
