@@ -1,3 +1,5 @@
+# app/views/sale_details_window.py
+
 from PyQt5.QtWidgets import (
     QWidget, QVBoxLayout, QLabel,
     QTableWidget, QTableWidgetItem, QMessageBox
@@ -18,6 +20,9 @@ class SaleDetailsWindow(QWidget):
         self.setup_ui()
         self.load_data()
 
+    # -----------------------------------------------------
+    # UI Setup (unchanged)
+    # -----------------------------------------------------
     def setup_ui(self):
         layout = QVBoxLayout()
 
@@ -44,6 +49,9 @@ class SaleDetailsWindow(QWidget):
 
         self.setLayout(layout)
 
+    # -----------------------------------------------------
+    # Load Sale Header + Items using Model
+    # -----------------------------------------------------
     def load_data(self):
         header = SaleDetailsModel.get_sale_header(self.sale_id)
 
@@ -52,21 +60,24 @@ class SaleDetailsWindow(QWidget):
             self.close()
             return
 
+        # Header
         self.header_label.setText(
             f"Invoice #{header['sale_id']} — Date: {header['date']}"
         )
 
+        # Items
         items = SaleDetailsModel.get_sale_items(self.sale_id)
 
         self.table.setRowCount(len(items))
 
-        for row, item in enumerate(items):
-            self.table.setItem(row, 0, QTableWidgetItem(str(item["product_id"])))
-            self.table.setItem(row, 1, QTableWidgetItem(item["product_name"]))
-            self.table.setItem(row, 2, QTableWidgetItem(str(item["quantity"])))
-            self.table.setItem(row, 3, QTableWidgetItem(f"{item['price_per_unit']:.2f}"))
-            self.table.setItem(row, 4, QTableWidgetItem(f"{item['line_total']:.2f}"))
+        for idx, item in enumerate(items):
+            self.table.setItem(idx, 0, QTableWidgetItem(str(item["product_id"])))
+            self.table.setItem(idx, 1, QTableWidgetItem(item["product_name"]))
+            self.table.setItem(idx, 2, QTableWidgetItem(str(item["quantity"])))
+            self.table.setItem(idx, 3, QTableWidgetItem(f"{item['price_per_unit']:.2f}"))
+            self.table.setItem(idx, 4, QTableWidgetItem(f"{item['line_total']:.2f}"))
 
+        # Summary
         self.summary_label.setText(
             f"Grand Total: {header['grand_total']:.2f}"
         )

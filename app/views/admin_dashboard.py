@@ -24,6 +24,8 @@ from app.models.shop_model import ShopModel
 from app.models.product_model import ProductModel
 from app.models.purchase_model import PurchaseModel
 from app.models.sale_model import SaleModel
+from app.controllers.dashboard_controller import DashboardController
+
 
 # ---------------------------------------------------
 # Admin Dashboard
@@ -68,6 +70,7 @@ class AdminDashboard(QWidget):
         """)
 
         self.setup_ui()
+        self.controller = DashboardController()
         self.load_shops()
 
     # ---------------------------------------------------
@@ -160,14 +163,15 @@ class AdminDashboard(QWidget):
     # ---------------------------------------------------
     def load_shops(self):
         self.shop_combo.clear()
-        shops = ShopModel.get_all()
-
+        shops = self.controller.get_shops()
+    
         for s in shops:
             self.shop_combo.addItem(s["shop_name"], s["shop_id"])
-
+    
         if shops:
             self.shop_combo.setCurrentIndex(0)
             self.load_products_for_current_shop()
+
 
     def on_shop_changed(self, idx):
         self.load_products_for_current_shop()
@@ -184,41 +188,36 @@ class AdminDashboard(QWidget):
         if shop_id is None:
             self.table.setRowCount(0)
             return
-
-        products = ProductModel.get_by_shop(shop_id)
-
-        # Load into table
-        self.table.setRowCount(len(products))
-
-        for row, p in enumerate(products):
-            pid = p["product_id"]
-            qty = p["quantity"]
-
-            avg_cost = PurchaseModel.avg_price(pid, shop_id)
-            last_purchase = PurchaseModel.last_price(pid, shop_id)
-            last_sale = SaleModel.last_price(pid, shop_id)
-
-            # Profit color
-            if last_purchase is None or last_sale is None:
-                profit_text = "N/A"
-                color = QColor("gray")
-            else:
-                diff = last_sale - last_purchase
-                profit_text = f"{diff:.2f}"
-                color = QColor("green") if diff > 0 else QColor("red")
-
-            # Set rows
-            self.table.setItem(row, 0, QTableWidgetItem(str(pid)))
+    
+        rows = self.controller.get_products_for_shop(shop_id)
+        self.table.setRowCount(len(rows))
+    
+        for row, p in enumerate(rows):
+            self.table.setItem(row, 0, QTableWidgetItem(str(p["product_id"])))
             self.table.setItem(row, 1, QTableWidgetItem(p["product_name"]))
-            self.table.setItem(row, 2, QTableWidgetItem(str(qty)))
-
-            self.table.setItem(row, 3, QTableWidgetItem(f"{avg_cost:.2f}" if avg_cost else "-"))
-            self.table.setItem(row, 4, QTableWidgetItem(f"{last_purchase:.2f}" if last_purchase else "-"))
-            self.table.setItem(row, 5, QTableWidgetItem(f"{last_sale:.2f}" if last_sale else "-"))
-
-            profit_item = QTableWidgetItem(profit_text)
-            profit_item.setForeground(color)
+            self.table.setItem(row, 2, QTableWidgetItem(str(p["quantity"])))
+    
+            self.table.setItem(row, 3, QTableWidgetItem(
+                f"{p['avg_cost']:.2f}" if p["avg_cost"] else "-"
+            ))
+            self.table.setItem(row, 4, QTableWidgetItem(
+                f"{p['last_purchase']:.2f}" if p["last_purchase"] else "-"
+            ))
+            self.table.setItem(row, 5, QTableWidgetItem(
+                f"{p['last_sale']:.2f}" if p["last_sale"] else "-"
+            ))
+    
+            profit_item = QTableWidgetItem(
+                "N/A" if p["profit"] is None else f"{p['profit']:.2f}"
+            )
+    
+            if p["profit"] is not None:
+                profit_item.setForeground(
+                    QColor("green") if p["profit"] > 0 else QColor("red")
+                )
+    
             self.table.setItem(row, 6, profit_item)
+
 
     # ---------------------------------------------------
     # Button Actions

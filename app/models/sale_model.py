@@ -51,3 +51,39 @@ class SaleModel:
         rows = cur.fetchall()
         conn.close()
         return rows
+    
+    @staticmethod
+    def create_sale(shop_id, date, items):
+        conn = sqlite3.connect(DB_PATH)
+        cur = conn.cursor()
+
+        grand_total = sum(i["subtotal"] for i in items)
+
+        cur.execute(
+            "INSERT INTO Sales (shop_id, date, grand_total) VALUES (?, ?, ?)",
+            (shop_id, date, grand_total)
+        )
+        sale_id = cur.lastrowid
+
+        for item in items:
+            cur.execute("""
+                INSERT INTO SaleItems
+                (sale_id, product_id, quantity, price_per_unit, line_total)
+                VALUES (?, ?, ?, ?, ?)
+            """, (
+                sale_id,
+                item["product_id"],
+                item["qty"],
+                item["price"],
+                item["subtotal"]
+            ))
+
+            cur.execute("""
+                UPDATE Stock
+                SET quantity = quantity - ?
+                WHERE product_id = ? AND shop_id = ?
+            """, (item["qty"], item["product_id"], shop_id))
+
+        conn.commit()
+        conn.close()
+        return sale_id

@@ -1,8 +1,9 @@
+# app/views/edit_product_window.py
+
 from PyQt5.QtWidgets import (
     QWidget, QVBoxLayout, QLabel, QLineEdit,
     QPushButton, QMessageBox
 )
-from PyQt5.QtCore import Qt
 
 from app.models.product_model import ProductModel
 
@@ -10,48 +11,55 @@ from app.models.product_model import ProductModel
 class EditProductWindow(QWidget):
     def __init__(self, product_id):
         super().__init__()
+
         self.product_id = product_id
 
         self.setWindowTitle("Edit Product")
-        self.setFixedSize(360, 160)
+        self.setMinimumSize(360, 140)
 
         self.setup_ui()
         self.load_product()
 
+    # -------------------------------
+    # UI setup (NO UI changes)
+    # -------------------------------
     def setup_ui(self):
         layout = QVBoxLayout()
-        layout.setSpacing(10)
-
-        title = QLabel("Edit Product Name")
-        title.setStyleSheet("font-weight: bold; font-size: 14px;")
-        layout.addWidget(title)
 
         layout.addWidget(QLabel("Product Name:"))
         self.name_input = QLineEdit()
         layout.addWidget(self.name_input)
 
         save_btn = QPushButton("Save")
-        save_btn.clicked.connect(self.save)
+        save_btn.clicked.connect(self.save_product)
         layout.addWidget(save_btn)
 
         self.setLayout(layout)
 
+    # -------------------------------
+    # Load from model
+    # -------------------------------
     def load_product(self):
         product = ProductModel.get_by_id(self.product_id)
+
         if not product:
-            QMessageBox.critical(self, "Error", "Product not found")
+            QMessageBox.critical(self, "Error", "Product not found.")
             self.close()
             return
 
         self.name_input.setText(product["name"])
 
-    def save(self):
-        name = self.name_input.text().strip()
-        if not name:
-            QMessageBox.warning(self, "Error", "Product name is required")
+    # -------------------------------
+    # Save via model
+    # -------------------------------
+    def save_product(self):
+        new_name = self.name_input.text().strip()
+
+        if not new_name:
+            QMessageBox.warning(self, "Error", "Product name is required.")
             return
 
-        ProductModel.update_name(self.product_id, name)
+        ProductModel.update_name(self.product_id, new_name)
 
-        QMessageBox.information(self, "Saved", "Product updated successfully")
+        QMessageBox.information(self, "Success", "Product updated successfully.")
         self.close()

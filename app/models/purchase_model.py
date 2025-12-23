@@ -7,17 +7,16 @@ class PurchaseModel:
     @staticmethod
     def create(product_id, shop_id, qty, price):
         total = qty * price
-
         conn = sqlite3.connect(DB_PATH)
-        c = conn.cursor()
-
-        c.execute("""
+        cur = conn.cursor()
+        cur.execute("""
             INSERT INTO Purchases (product_id, shop_id, quantity, price, total, date)
             VALUES (?, ?, ?, ?, ?, date('now'))
         """, (product_id, shop_id, qty, price, total))
-
+        purchase_id = cur.lastrowid
         conn.commit()
         conn.close()
+        return purchase_id
 
     @staticmethod
     def last_price(product_id, shop_id):

@@ -1,3 +1,5 @@
+# app/views/show_sales_window.py
+
 from PyQt5.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QComboBox,
     QTableWidget, QTableWidgetItem, QDateEdit, QPushButton
@@ -18,11 +20,13 @@ class ShowSalesWindow(QWidget):
         self.setup_ui()
         self.load_shops()
 
-    # ---------------- UI ----------------
+    # -------------------------------------------------------
+    # UI SETUP (unchanged)
+    # -------------------------------------------------------
     def setup_ui(self):
         layout = QVBoxLayout()
 
-        # Filters
+        # Filters Section
         filters = QHBoxLayout()
 
         filters.addWidget(QLabel("Select Shop:"))
@@ -46,30 +50,33 @@ class ShowSalesWindow(QWidget):
 
         layout.addLayout(filters)
 
-        # Table
+        # Sales Table
         self.table = QTableWidget()
         self.table.setColumnCount(3)
-        self.table.setHorizontalHeaderLabels(
-            ["Sale ID", "Date", "Total"]
-        )
+        self.table.setHorizontalHeaderLabels(["Sale ID", "Date", "Total"])
         self.table.setEditTriggers(self.table.NoEditTriggers)
         self.table.cellDoubleClicked.connect(self.open_sale_details)
 
         layout.addWidget(self.table)
         self.setLayout(layout)
 
-    # ---------------- Data ----------------
+    # -------------------------------------------------------
+    # Load Shops
+    # -------------------------------------------------------
     def load_shops(self):
         self.shop_combo.clear()
         shops = ShopModel.get_all()
 
-        for s in shops:
-            self.shop_combo.addItem(s["shop_name"], s["shop_id"])
+        for shop_id, shop_name in shops:
+            self.shop_combo.addItem(shop_name, shop_id)
 
         if shops:
             self.shop_combo.setCurrentIndex(0)
             self.load_sales()
 
+    # -------------------------------------------------------
+    # Load Sales from Model
+    # -------------------------------------------------------
     def load_sales(self):
         shop_id = self.shop_combo.currentData()
         if shop_id is None:
@@ -79,9 +86,7 @@ class ShowSalesWindow(QWidget):
         start = self.start_date.date().toString("yyyy-MM-dd")
         end = self.end_date.date().toString("yyyy-MM-dd")
 
-        sales = SaleModel.get_sales_by_shop_and_date(
-            shop_id, start, end
-        )
+        sales = SaleModel.get_sales_by_shop_and_date(shop_id, start, end)
 
         self.table.setRowCount(0)
 
@@ -90,12 +95,14 @@ class ShowSalesWindow(QWidget):
 
         self.table.setRowCount(len(sales))
 
-        for row, sale in enumerate(sales):
-            self.table.setItem(row, 0, QTableWidgetItem(str(sale["sale_id"])))
-            self.table.setItem(row, 1, QTableWidgetItem(sale["date"]))
-            self.table.setItem(row, 2, QTableWidgetItem(f"{sale['grand_total']:.2f}"))
+        for row_idx, sale in enumerate(sales):
+            self.table.setItem(row_idx, 0, QTableWidgetItem(str(sale["sale_id"])))
+            self.table.setItem(row_idx, 1, QTableWidgetItem(sale["date"]))
+            self.table.setItem(row_idx, 2, QTableWidgetItem(f"{sale['grand_total']:.2f}"))
 
-    # ---------------- Actions ----------------
+    # -------------------------------------------------------
+    # Open Sale Details Window
+    # -------------------------------------------------------
     def open_sale_details(self, row, col):
         sale_id = int(self.table.item(row, 0).text())
         self.details_window = SaleDetailsWindow(sale_id)

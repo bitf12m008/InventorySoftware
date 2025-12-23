@@ -1,3 +1,5 @@
+# app/views/profit_report_window.py
+
 from PyQt5.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QComboBox,
     QPushButton, QDateEdit, QTableWidget, QTableWidgetItem,
@@ -18,10 +20,13 @@ class ProfitReportWindow(QWidget):
         self.setup_ui()
         self.load_shops()
 
+    # -------------------------------------------------
+    # UI SETUP  (unchanged)
+    # -------------------------------------------------
     def setup_ui(self):
         layout = QVBoxLayout()
 
-        # Filters
+        # ---------------- FILTER BAR ----------------
         filters = QHBoxLayout()
 
         filters.addWidget(QLabel("Shop:"))
@@ -44,7 +49,7 @@ class ProfitReportWindow(QWidget):
 
         layout.addLayout(filters)
 
-        # Table
+        # ---------------- TABLE ----------------
         self.table = QTableWidget()
         self.table.setColumnCount(7)
         self.table.setHorizontalHeaderLabels([
@@ -55,14 +60,22 @@ class ProfitReportWindow(QWidget):
 
         self.setLayout(layout)
 
+    # -------------------------------------------------
+    # LOAD SHOPS (via ShopModel)
+    # -------------------------------------------------
     def load_shops(self):
         self.shop_combo.clear()
-        shops = ShopModel.get_all()
+
+        shops = ShopModel.get_all()   # returns list of rows
         for s in shops:
             self.shop_combo.addItem(s["shop_name"], s["shop_id"])
 
+    # -------------------------------------------------
+    # LOAD PROFIT REPORT (via ProfitReportModel)
+    # -------------------------------------------------
     def load_report(self):
         shop_id = self.shop_combo.currentData()
+
         if shop_id is None:
             QMessageBox.warning(self, "Error", "Select a shop")
             return
@@ -70,17 +83,16 @@ class ProfitReportWindow(QWidget):
         start = self.start_date.date().toString("yyyy-MM-dd")
         end = self.end_date.date().toString("yyyy-MM-dd")
 
-        report = ProfitReportModel.get_profit_report(
-            shop_id, start, end
-        )
+        report = ProfitReportModel.get_profit_report(shop_id, start, end)
 
         if not report:
             self.table.setRowCount(0)
-            QMessageBox.information(self, "No Data", "No sales found")
+            QMessageBox.information(self, "No Data", "No sales found for selected period.")
             return
 
         self.table.setRowCount(len(report))
 
+        # Fill table
         for row, item in enumerate(report):
             self.table.setItem(row, 0, QTableWidgetItem(str(item["product_id"])))
             self.table.setItem(row, 1, QTableWidgetItem(item["product_name"]))

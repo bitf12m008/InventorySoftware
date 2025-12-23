@@ -6,7 +6,14 @@ from PyQt5.QtWidgets import (
 )
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont
-from app.services.auth_service import AuthService
+from app.models.user_model import UserModel
+
+class AuthController:
+
+    @staticmethod
+    def login(username, password):
+        return UserModel.authenticate(username, password)
+
 
 
 class LoginWindow(QWidget):
@@ -127,7 +134,7 @@ class LoginWindow(QWidget):
             )
             return
 
-        user = AuthService.login(username, password)
+        user = AuthController.login(username, password)
 
         if user:
             QMessageBox.information(
