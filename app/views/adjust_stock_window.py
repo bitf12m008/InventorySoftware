@@ -1,5 +1,3 @@
-# app/views/adjust_stock_window.py
-
 from PyQt5.QtWidgets import (
     QWidget, QVBoxLayout, QLabel, QSpinBox,
     QPushButton, QMessageBox, QHBoxLayout, QFrame
@@ -23,14 +21,10 @@ class AdjustStockWindow(QWidget):
 
         self.setup_ui(product_name)
 
-    # ----------------------------------------------------
-    # UI SETUP
-    # ----------------------------------------------------
     def setup_ui(self, product_name):
         main = QVBoxLayout()
         main.setContentsMargins(20, 20, 20, 20)
 
-        # Card
         card = QFrame()
         card.setStyleSheet("""
             QFrame {
@@ -42,7 +36,6 @@ class AdjustStockWindow(QWidget):
         card_layout = QVBoxLayout()
         card_layout.setContentsMargins(20, 20, 20, 20)
 
-        # Title
         title = QLabel(f"Adjust Stock")
         title.setFont(QFont("Segoe UI", 16, QFont.Bold))
         title.setAlignment(Qt.AlignCenter)
@@ -54,7 +47,6 @@ class AdjustStockWindow(QWidget):
         subtitle.setStyleSheet("color: #555; margin-bottom: 10px;")
         card_layout.addWidget(subtitle)
 
-        # Input row
         qty_row = QHBoxLayout()
         qty_row.addWidget(QLabel("New Quantity:"))
         qty_row.addStretch()
@@ -67,7 +59,6 @@ class AdjustStockWindow(QWidget):
 
         card_layout.addLayout(qty_row)
 
-        # Save Button
         save_btn = QPushButton("Save")
         save_btn.setStyleSheet("""
             QPushButton {
@@ -90,9 +81,6 @@ class AdjustStockWindow(QWidget):
         main.addWidget(card)
         self.setLayout(main)
 
-    # ----------------------------------------------------
-    # Save to DB
-    # ----------------------------------------------------
     def save(self):
         new_qty = self.qty_spin.value()
 

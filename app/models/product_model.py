@@ -37,13 +37,13 @@ class ProductModel:
     @staticmethod
     def get_by_shop(shop_id):
         conn = sqlite3.connect(DB_PATH)
-        conn.row_factory = sqlite3.Row   # ✅ REQUIRED
+        conn.row_factory = sqlite3.Row
         cur = conn.cursor()
 
         cur.execute("""
             SELECT
                 p.product_id,
-                p.name AS product_name,   -- ✅ CRITICAL ALIAS
+                p.name AS product_name,
                 s.quantity
             FROM Products p
             JOIN Stock s ON p.product_id = s.product_id

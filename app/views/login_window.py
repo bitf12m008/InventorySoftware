@@ -1,5 +1,3 @@
-# app/login_window.py
-
 from PyQt5.QtWidgets import (
     QWidget, QLabel, QLineEdit, QPushButton,
     QVBoxLayout, QMessageBox, QHBoxLayout, QFrame, QStyle
@@ -30,7 +28,6 @@ class LoginWindow(QWidget):
         layout = QVBoxLayout()
         layout.setContentsMargins(30, 30, 30, 30)
 
-        # -------- Card Container --------
         card = QFrame()
         card.setStyleSheet("""
             QFrame {
@@ -43,19 +40,13 @@ class LoginWindow(QWidget):
         """)
         card_layout = QVBoxLayout()
 
-        # -------- Title with built-in icon --------
         title_layout = QHBoxLayout()
-
-        # icon_label = QLabel()
-        # icon_label.setPixmap(self.style().standardIcon(QStyle.SP_DesktopIcon).pixmap(32, 32))
-        # title_layout.addWidget(icon_label)
 
         title = QLabel("Inventory Login")
         title.setFont(QFont("Arial", 18))
         title.setStyleSheet("font-weight: bold; color: #333;")
         title.setAlignment(Qt.AlignCenter)
 
-        # Ensure enough space so the label doesn't get cropped
         title.setMinimumHeight(20)
 
         title_layout.addWidget(title)
@@ -64,7 +55,6 @@ class LoginWindow(QWidget):
         card_layout.addLayout(title_layout)
         card_layout.addSpacing(10)
 
-        # -------- Username Input --------
         self.username_input = QLineEdit()
         self.username_input.setPlaceholderText("Username")
         self.username_input.setStyleSheet("""
@@ -80,7 +70,6 @@ class LoginWindow(QWidget):
         """)
         card_layout.addWidget(self.username_input)
 
-        # -------- Password Input --------
         self.password_input = QLineEdit()
         self.password_input.setPlaceholderText("Password")
         self.password_input.setEchoMode(QLineEdit.Password)
@@ -97,7 +86,6 @@ class LoginWindow(QWidget):
         """)
         card_layout.addWidget(self.password_input)
 
-        # -------- Login Button --------
         login_btn = QPushButton("Login")
         login_btn.setIcon(self.style().standardIcon(QStyle.SP_DialogOkButton))
         login_btn.setStyleSheet("""
@@ -121,7 +109,6 @@ class LoginWindow(QWidget):
 
         self.setLayout(layout)
 
-    # -------- Login Logic --------
     def handle_login(self):
         username = self.username_input.text().strip()
         password = self.password_input.text().strip()

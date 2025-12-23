@@ -1,8 +1,6 @@
 # app/admin_dashboard.py
 
 import sys
-import os
-import csv
 import datetime
 
 from app.views.add_product_window import AddProductWindow
@@ -16,20 +14,12 @@ from app.views.profit_report_window import ProfitReportWindow
 from PyQt5.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
     QComboBox, QTableWidget, QTableWidgetItem, QMessageBox,
-    QFileDialog, QFrame, QStyle
+    QFileDialog, QStyle
 )
-from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont, QColor
-from app.models.shop_model import ShopModel
-from app.models.product_model import ProductModel
-from app.models.purchase_model import PurchaseModel
-from app.models.sale_model import SaleModel
 from app.controllers.dashboard_controller import DashboardController
 
 
-# ---------------------------------------------------
-# Admin Dashboard
-# ---------------------------------------------------
 class AdminDashboard(QWidget):
     def __init__(self, user_info=None):
         super().__init__()
@@ -73,13 +63,9 @@ class AdminDashboard(QWidget):
         self.controller = DashboardController()
         self.load_shops()
 
-    # ---------------------------------------------------
-    # UI Setup
-    # ---------------------------------------------------
     def setup_ui(self):
         main_layout = QVBoxLayout()
 
-        # ---------------- TOP BAR ----------------
         top_layout = QHBoxLayout()
         title = QLabel("Admin Dashboard")
         title.setFont(QFont("Arial", 18))
@@ -105,7 +91,6 @@ class AdminDashboard(QWidget):
 
         main_layout.addLayout(top_layout)
 
-        # ---------------- TABLE ----------------
         self.table = QTableWidget()
         self.table.setColumnCount(7)
         self.table.setHorizontalHeaderLabels([
@@ -117,7 +102,6 @@ class AdminDashboard(QWidget):
         self.table.setSelectionBehavior(self.table.SelectRows)
         main_layout.addWidget(self.table, stretch=1)
 
-        # ---------------- ACTION BUTTONS ----------------
         btn_row = QHBoxLayout()
 
         def btn(text, icon):
@@ -158,9 +142,6 @@ class AdminDashboard(QWidget):
 
         self.setLayout(main_layout)
 
-    # ---------------------------------------------------
-    # Loaders / Logic
-    # ---------------------------------------------------
     def load_shops(self):
         self.shop_combo.clear()
         shops = self.controller.get_shops()
@@ -180,9 +161,6 @@ class AdminDashboard(QWidget):
         self.load_products_for_current_shop()
         QMessageBox.information(self, "Refreshed", "Data refreshed!")
 
-    # ---------------------------------------------------
-    # Load Product Table
-    # ---------------------------------------------------
     def load_products_for_current_shop(self):
         shop_id = self.shop_combo.currentData()
         if shop_id is None:
@@ -219,9 +197,6 @@ class AdminDashboard(QWidget):
             self.table.setItem(row, 6, profit_item)
 
 
-    # ---------------------------------------------------
-    # Button Actions
-    # ---------------------------------------------------
     def add_product(self):
         self.add_product_window = AddProductWindow()
         self.add_product_window.show()
@@ -262,9 +237,6 @@ class AdminDashboard(QWidget):
         self.profit_window = ProfitReportWindow()
         self.profit_window.show()
 
-    # ---------------------------------------------------
-    # Backup DB
-    # ---------------------------------------------------
     def backup_db(self):
         ts = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
         default = f"inventory_backup_{ts}.db"
@@ -280,7 +252,6 @@ class AdminDashboard(QWidget):
             QMessageBox.critical(self, "Error", str(e))
 
 
-# Standalone test
 if __name__ == "__main__":
     from PyQt5.QtWidgets import QApplication
     app = QApplication(sys.argv)

@@ -1,7 +1,7 @@
 from app.models.shop_model import ShopModel
 from app.models.product_model import ProductModel
 from app.models.sale_model import SaleModel
-from app.models.stock_model import StockModel  # create if not exists
+from app.models.stock_model import StockModel
 from datetime import datetime
 
 
@@ -9,18 +9,12 @@ class SaleController:
     def __init__(self):
         self.cart = []
 
-    # ----------------------------
-    # Shops & Products
-    # ----------------------------
     def get_shops(self):
         return ShopModel.get_all()
 
     def get_products_for_shop(self, shop_id):
         return ProductModel.get_by_shop(shop_id)
 
-    # ----------------------------
-    # Cart Logic
-    # ----------------------------
     def add_to_cart(self, product_id, name, price, qty, stock):
         if qty > stock:
             raise ValueError("Not enough stock")
@@ -55,14 +49,10 @@ class SaleController:
     def get_total(self):
         return sum(i["subtotal"] for i in self.cart)
 
-    # ----------------------------
-    # Save Sale
-    # ----------------------------
     def save_sale(self, shop_id):
         if not self.cart:
             raise ValueError("Cart is empty")
 
-        # Validate stock again (critical)
         for item in self.cart:
             current = StockModel.get_quantity(item["product_id"], shop_id)
             if item["qty"] > current:

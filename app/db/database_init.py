@@ -1,4 +1,3 @@
-# app/database_init.py
 import sqlite3
 import os
 import sys
@@ -10,10 +9,7 @@ def get_base_path():
         return os.path.dirname(sys.executable)
     return os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-BASE_DIR = get_base_path()
-DB_DIR = os.path.join(BASE_DIR, "database")
-os.makedirs(DB_DIR, exist_ok=True)
-
+DB_DIR = os.path.join(get_base_path(), "database")
 DB_PATH = os.path.join(DB_DIR, "app.db")
 
 def initialize_database():
@@ -120,7 +116,6 @@ def initialize_database():
         cursor.execute("INSERT INTO Users (username, password_hash, role) VALUES (?, ?, ?)",
                        ("admin", password_hash, "admin"))
         conn.commit()
-        print("Default admin user created: username='admin', password='admin123'")
 
     # default shops
     cursor.execute("SELECT COUNT(*) FROM Shops")
@@ -130,7 +125,6 @@ def initialize_database():
         for s in default_shops:
             cursor.execute("INSERT INTO Shops (shop_name) VALUES (?)", (s,))
         conn.commit()
-        print("Default shops added.")
 
     conn.close()
     print("Database initialized successfully!")

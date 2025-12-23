@@ -1,14 +1,11 @@
-# app/views/add_purchase_window.py
-
 from PyQt5.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QComboBox, QLabel, QPushButton,
-    QTableWidget, QTableWidgetItem, QSpinBox, QLineEdit, QMessageBox
+    QTableWidget, QSpinBox, QLineEdit, QMessageBox
 )
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont
 
 from app.controllers.purchase_controller import PurchaseController
-
 
 class AddPurchaseWindow(QWidget):
     def __init__(self):
@@ -23,13 +20,9 @@ class AddPurchaseWindow(QWidget):
         self.load_shops()
         self.load_products()
 
-    # ----------------------------------------------------
-    # UI SETUP
-    # ----------------------------------------------------
     def setup_ui(self):
         main = QVBoxLayout()
 
-        # --------- TOP ROW ---------
         top = QHBoxLayout()
         top.addWidget(QLabel("Select Shop:"))
 
@@ -42,12 +35,10 @@ class AddPurchaseWindow(QWidget):
 
         main.addLayout(top)
 
-        # --------- TABLE ---------
         self.table = QTableWidget(0, 4)
         self.table.setHorizontalHeaderLabels(["Product", "Qty", "Price", "Remove"])
         main.addWidget(self.table)
 
-        # --------- BOTTOM ---------
         bottom = QHBoxLayout()
 
         self.total_label = QLabel("Grand Total: 0.00")
@@ -63,9 +54,6 @@ class AddPurchaseWindow(QWidget):
         main.addLayout(bottom)
         self.setLayout(main)
 
-    # ----------------------------------------------------
-    # LOAD SHOPS / PRODUCTS
-    # ----------------------------------------------------
     def load_shops(self):
         shops = self.controller.get_shops()
         self.shop_combo.clear()
@@ -73,18 +61,13 @@ class AddPurchaseWindow(QWidget):
             self.shop_combo.addItem(name, sid)
 
     def load_products(self):
-        self.products = self.controller.get_products()   # list of tuples
-        # Convert to dict for faster lookup
+        self.products = self.controller.get_products()
         self.product_dict = {name.lower(): pid for pid, name in self.products}
 
-    # ----------------------------------------------------
-    # ADD ROW
-    # ----------------------------------------------------
     def add_row(self):
         row = self.table.rowCount()
         self.table.insertRow(row)
 
-        # -------- Product dropdown --------
         product_combo = QComboBox()
         product_combo.setEditable(True)
 
@@ -95,31 +78,24 @@ class AddPurchaseWindow(QWidget):
 
         self.table.setCellWidget(row, 0, product_combo)
 
-        # -------- Qty --------
         qty_spin = QSpinBox()
         qty_spin.setRange(1, 100000)
         qty_spin.valueChanged.connect(self.recalculate)
         self.table.setCellWidget(row, 1, qty_spin)
 
-        # -------- Price --------
         price_input = QLineEdit()
         price_input.setPlaceholderText("Enter price")
         price_input.textChanged.connect(self.recalculate)
         self.table.setCellWidget(row, 2, price_input)
 
-        # -------- Remove button --------
         remove_btn = QPushButton("X")
         remove_btn.clicked.connect(lambda _, r=row: self.remove_row(r))
         self.table.setCellWidget(row, 3, remove_btn)
 
-    # ----------------------------------------------------
     def remove_row(self, row):
         self.table.removeRow(row)
         self.recalculate()
 
-    # ----------------------------------------------------
-    # Recalculate totals
-    # ----------------------------------------------------
     def recalculate(self):
         rows = []
         total = 0
@@ -145,9 +121,6 @@ class AddPurchaseWindow(QWidget):
         self.controller.rows = rows
         self.total_label.setText(f"Grand Total: {total:.2f}")
 
-    # ----------------------------------------------------
-    # SAVE PURCHASE
-    # ----------------------------------------------------
     def save_purchase(self):
         if self.table.rowCount() == 0:
             QMessageBox.warning(self, "Error", "Add at least one product row.")

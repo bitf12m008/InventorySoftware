@@ -1,12 +1,9 @@
-# app/views/edit_product_window.py
-
 from PyQt5.QtWidgets import (
     QWidget, QVBoxLayout, QLabel, QLineEdit,
     QPushButton, QMessageBox
 )
 
 from app.models.product_model import ProductModel
-
 
 class EditProductWindow(QWidget):
     def __init__(self, product_id):
@@ -20,9 +17,6 @@ class EditProductWindow(QWidget):
         self.setup_ui()
         self.load_product()
 
-    # -------------------------------
-    # UI setup (NO UI changes)
-    # -------------------------------
     def setup_ui(self):
         layout = QVBoxLayout()
 
@@ -36,9 +30,6 @@ class EditProductWindow(QWidget):
 
         self.setLayout(layout)
 
-    # -------------------------------
-    # Load from model
-    # -------------------------------
     def load_product(self):
         product = ProductModel.get_by_id(self.product_id)
 
@@ -49,9 +40,6 @@ class EditProductWindow(QWidget):
 
         self.name_input.setText(product["name"])
 
-    # -------------------------------
-    # Save via model
-    # -------------------------------
     def save_product(self):
         new_name = self.name_input.text().strip()
 

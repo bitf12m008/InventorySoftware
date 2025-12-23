@@ -1,14 +1,10 @@
-# app/views/add_sale_window.py
-
 from PyQt5.QtWidgets import (
     QWidget, QLabel, QVBoxLayout, QHBoxLayout, QComboBox, QLineEdit,
     QPushButton, QTableWidget, QTableWidgetItem, QMessageBox, QSpinBox
 )
-from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont
 
 from app.controllers.sale_controller import SaleController
-
 
 class AddSaleWindow(QWidget):
     def __init__(self, parent=None):
@@ -22,19 +18,14 @@ class AddSaleWindow(QWidget):
         self.setup_ui()
         self.load_shops()
 
-    # -------------------------------------------------
-    # UI
-    # -------------------------------------------------
     def setup_ui(self):
         main = QVBoxLayout()
         main.setSpacing(10)
 
-        # -------- Title --------
         title = QLabel("New Sale Invoice")
         title.setFont(QFont("Segoe UI", 16, QFont.Bold))
         main.addWidget(title)
 
-        # -------- Shop Selection --------
         top = QHBoxLayout()
         top.addWidget(QLabel("Select Shop:"))
 
@@ -44,7 +35,6 @@ class AddSaleWindow(QWidget):
 
         main.addLayout(top)
 
-        # -------- Product Row --------
         prod_row = QHBoxLayout()
 
         self.product_combo = QComboBox()
@@ -66,7 +56,6 @@ class AddSaleWindow(QWidget):
 
         main.addLayout(prod_row)
 
-        # -------- Cart Table --------
         self.table = QTableWidget(0, 6)
         self.table.setHorizontalHeaderLabels([
             "Product ID", "Product", "Unit Price",
@@ -75,7 +64,6 @@ class AddSaleWindow(QWidget):
         self.table.setEditTriggers(self.table.NoEditTriggers)
         main.addWidget(self.table, stretch=1)
 
-        # -------- Bottom --------
         bottom = QHBoxLayout()
         self.total_label = QLabel("Total: 0.00")
         self.total_label.setFont(QFont("Segoe UI", 12, QFont.Bold))
@@ -95,9 +83,6 @@ class AddSaleWindow(QWidget):
 
         self.setLayout(main)
 
-    # -------------------------------------------------
-    # Loaders
-    # -------------------------------------------------
     def load_shops(self):
         self.shop_combo.clear()
         shops = self.controller.get_shops()
@@ -130,9 +115,6 @@ class AddSaleWindow(QWidget):
         if rows:
             self.product_combo.setCurrentIndex(0)
 
-    # -------------------------------------------------
-    # Cart
-    # -------------------------------------------------
     def add_to_cart(self):
         data = self.product_combo.currentData()
         if not data:
@@ -186,9 +168,6 @@ class AddSaleWindow(QWidget):
         self.controller.clear_cart()
         self.refresh_table()
 
-    # -------------------------------------------------
-    # Save
-    # -------------------------------------------------
     def save_sale(self):
         shop_id = self.shop_combo.currentData()
         if not shop_id:

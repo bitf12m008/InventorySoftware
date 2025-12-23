@@ -1,7 +1,6 @@
 import sqlite3
 from app.db.database_init import DB_PATH
 
-
 class SaleModel:
 
     @staticmethod

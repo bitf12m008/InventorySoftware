@@ -7,15 +7,9 @@ class DashboardController:
     def __init__(self):
         pass
 
-    # ----------------------------
-    # Shops
-    # ----------------------------
     def get_shops(self):
         return ShopModel.get_all()
 
-    # ----------------------------
-    # Products + Calculations
-    # ----------------------------
     def get_products_for_shop(self, shop_id):
         products = ProductModel.get_by_shop(shop_id)
 

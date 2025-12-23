@@ -1,14 +1,10 @@
 import sqlite3
 from app.db.database_init import DB_PATH
 
-
 class ProfitReportModel:
 
     @staticmethod
     def get_profit_report(shop_id, start_date, end_date):
-        """
-        Returns aggregated profit report per product for given shop & date range
-        """
         conn = sqlite3.connect(DB_PATH)
         conn.row_factory = sqlite3.Row
         cur = conn.cursor()

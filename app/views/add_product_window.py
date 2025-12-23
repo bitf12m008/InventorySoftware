@@ -3,13 +3,12 @@
 from PyQt5.QtWidgets import (
     QWidget, QLabel, QVBoxLayout, QLineEdit, QPushButton,
     QMessageBox, QListWidget, QListWidgetItem, QCheckBox,
-    QFrame, QStyle, QHBoxLayout
+    QFrame, QStyle,
 )
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont
 
 from app.controllers.product_controller import ProductController
-
 
 class AddProductWindow(QWidget):
     def __init__(self):
@@ -24,9 +23,6 @@ class AddProductWindow(QWidget):
         self.setup_ui()
         self.load_shops()
 
-    # -------------------------------------------------
-    # UI (unchanged)
-    # -------------------------------------------------
     def setup_ui(self):
         main = QVBoxLayout()
         main.setContentsMargins(20, 20, 20, 20)
@@ -80,7 +76,6 @@ class AddProductWindow(QWidget):
         """)
         card_layout.addWidget(self.name_input)
 
-        # Shop assignment
         label_shop = QLabel("Assign to Shops")
         label_shop.setFont(QFont("Segoe UI", 11))
         card_layout.addWidget(label_shop)
@@ -102,7 +97,6 @@ class AddProductWindow(QWidget):
         list_container.setLayout(list_layout)
         card_layout.addWidget(list_container)
 
-        # Save button
         add_btn = QPushButton("Add Product")
         add_btn.setIcon(self.style().standardIcon(QStyle.SP_DialogOkButton))
         add_btn.clicked.connect(self.save_product)
@@ -114,9 +108,6 @@ class AddProductWindow(QWidget):
         main.addWidget(card)
         self.setLayout(main)
 
-    # -------------------------------------------------
-    # Load Shops (delegated to controller)
-    # -------------------------------------------------
     def load_shops(self):
         shops = self.controller.get_shops()
 
@@ -127,9 +118,6 @@ class AddProductWindow(QWidget):
             self.shop_list.addItem(item)
             self.shop_list.setItemWidget(item, checkbox)
 
-    # -------------------------------------------------
-    # Save Product (delegated to controller)
-    # -------------------------------------------------
     def save_product(self):
         name = self.name_input.text().strip()
 
@@ -137,7 +125,6 @@ class AddProductWindow(QWidget):
             QMessageBox.warning(self, "Missing Name", "Please enter a product name.")
             return
 
-        # Get selected shops
         selected_shop_ids = []
         for i in range(self.shop_list.count()):
             item = self.shop_list.item(i)

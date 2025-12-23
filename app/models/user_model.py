@@ -2,14 +2,10 @@ import sqlite3
 import hashlib
 from app.db.database_init import DB_PATH
 
-
 class UserModel:
 
     @staticmethod
     def authenticate(username: str, password: str):
-        """
-        Returns user dict if credentials are valid, else None
-        """
         if not username or not password:
             return None
 
@@ -31,7 +27,6 @@ class UserModel:
         if not row:
             return None
 
-        # Return clean user dict (controller/view friendly)
         return {
             "user_id": row["user_id"],
             "username": row["username"],
