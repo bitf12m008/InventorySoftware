@@ -1,12 +1,11 @@
 Understand and Refactor existing implementation
-
-profit loss per inventory
-
+Beautify UI
 profit loss weekly sale report
 
-database backup plans [local, cloud, auto, by admin etc..]
+profit loss per inventory // not now
 
-Beautify UI
+
+database backup plans [local, cloud, auto, by admin etc..]
 
 add other accounts [for staff, for admin already exist]
 

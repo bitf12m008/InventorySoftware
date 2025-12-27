@@ -14,6 +14,7 @@ from app.views.add_sale_window import AddSaleWindow
 from app.views.add_purchase_window import AddPurchaseWindow
 from app.views.show_sales_window import ShowSalesWindow
 from app.views.profit_report_window import ProfitReportWindow
+from app.views.weekly_profit_window import WeeklyProfitWindow
 
 class AdminDashboard(QWidget):
     def __init__(self, user_info=None):
@@ -136,6 +137,7 @@ class AdminDashboard(QWidget):
         btn_row.addWidget(self.action_button("Add Sale", QStyle.SP_ArrowUp, self.add_sale))
         btn_row.addWidget(self.action_button("Show Sales", QStyle.SP_FileIcon, self.open_show_sales))
         btn_row.addWidget(self.action_button("Profit Report", QStyle.SP_ComputerIcon, self.open_profit_report))
+        btn_row.addWidget(self.action_button("Weekly Profit", QStyle.SP_ComputerIcon, self.open_weekly_profit))
 
         btn_row.addStretch()
         main_layout.addLayout(btn_row)
@@ -234,6 +236,10 @@ class AdminDashboard(QWidget):
     def open_profit_report(self):
         self.profit_window = ProfitReportWindow()
         self.profit_window.show()
+
+    def open_weekly_profit(self):
+        self.weekly_profit_window = WeeklyProfitWindow()
+        self.weekly_profit_window.show()
 
     def backup_db(self):
         ts = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
