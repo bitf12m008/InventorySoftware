@@ -1,8 +1,12 @@
-# app/admin_dashboard.py
-
-import sys
-import datetime
-
+import sys, datetime
+from PyQt5.QtWidgets import (
+    QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
+    QComboBox, QTableWidget, QTableWidgetItem, QMessageBox,
+    QFileDialog, QFrame, QGraphicsDropShadowEffect, QStyle
+)
+from PyQt5.QtGui import QFont, QColor
+from PyQt5.QtCore import Qt
+from app.controllers.dashboard_controller import DashboardController
 from app.views.add_product_window import AddProductWindow
 from app.views.edit_product_window import EditProductWindow
 from app.views.adjust_stock_window import AdjustStockWindow
@@ -11,195 +15,189 @@ from app.views.add_purchase_window import AddPurchaseWindow
 from app.views.show_sales_window import ShowSalesWindow
 from app.views.profit_report_window import ProfitReportWindow
 
-from PyQt5.QtWidgets import (
-    QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
-    QComboBox, QTableWidget, QTableWidgetItem, QMessageBox,
-    QFileDialog, QStyle
-)
-from PyQt5.QtGui import QFont, QColor
-from app.controllers.dashboard_controller import DashboardController
-
-
 class AdminDashboard(QWidget):
     def __init__(self, user_info=None):
         super().__init__()
         self.user_info = user_info or {}
+        self.controller = DashboardController()
 
         self.setWindowTitle("Admin Dashboard - Inventory")
-        self.resize(1250, 700)
-
-        self.setStyleSheet("""
-            QWidget {
-                background: #f4f4f4;
-            }
-            QComboBox {
-                padding: 6px;
-                border: 1px solid #aaa;
-                border-radius: 6px;
-            }
-            QPushButton {
-                padding: 8px 14px;
-                background: #0078d4;
-                color: white;
-                border-radius: 6px;
-                font-weight: bold;
-            }
-            QPushButton:hover {
-                background: #005fa3;
-            }
-            QTableWidget {
-                background: white;
-                border: 1px solid #ddd;
-            }
-            QHeaderView::section {
-                background: #eaeaea;
-                padding: 6px;
-                font-weight: bold;
-                border: none;
-            }
-        """)
+        self.resize(1300, 760)
+        self.setStyleSheet("background: #eef1f6;")
 
         self.setup_ui()
-        self.controller = DashboardController()
         self.load_shops()
 
     def setup_ui(self):
-        main_layout = QVBoxLayout()
+        main_layout = QVBoxLayout(self)
+        main_layout.setContentsMargins(30, 30, 30, 30)
+        main_layout.setSpacing(20)
 
-        top_layout = QHBoxLayout()
+        header = QFrame()
+        header.setStyleSheet("""
+            QFrame {
+                background: white;
+                border-radius: 14px;
+            }
+        """)
+        header_shadow = QGraphicsDropShadowEffect()
+        header_shadow.setBlurRadius(20)
+        header_shadow.setYOffset(3)
+        header_shadow.setColor(QColor(0, 0, 0, 60))
+        header.setGraphicsEffect(header_shadow)
+
+        header_layout = QHBoxLayout(header)
+        header_layout.setContentsMargins(24, 18, 24, 18)
+
         title = QLabel("Admin Dashboard")
-        title.setFont(QFont("Arial", 18))
-        title.setStyleSheet("font-weight: bold; color: #333;")
+        title.setFont(QFont("Segoe UI Semibold", 22))
+        title.setStyleSheet("color: #222;")
+        header_layout.addWidget(title)
 
-        top_layout.addWidget(title, stretch=1)
-        top_layout.addStretch()
+        header_layout.addStretch()
 
-        top_layout.addWidget(QLabel("Select Shop:"))
+        shop_label = QLabel("Shop:")
+        shop_label.setFont(QFont("Segoe UI", 11))
+        header_layout.addWidget(shop_label)
+
         self.shop_combo = QComboBox()
+        self.shop_combo.setMinimumWidth(220)
         self.shop_combo.currentIndexChanged.connect(self.on_shop_changed)
-        top_layout.addWidget(self.shop_combo)
+        self.shop_combo.setStyleSheet("""
+            QComboBox {
+                padding: 8px 12px;
+                border-radius: 8px;
+                border: 1px solid #c9c9c9;
+                background: white;
+                font-size: 13px;
+            }
+        """)
+        header_layout.addWidget(self.shop_combo)
 
-        refresh_btn = QPushButton("Refresh")
-        refresh_btn.setIcon(self.style().standardIcon(QStyle.SP_BrowserReload))
+        refresh_btn = self.action_button("Refresh", QStyle.SP_BrowserReload)
         refresh_btn.clicked.connect(self.reload_current_shop)
-        top_layout.addWidget(refresh_btn)
+        header_layout.addWidget(refresh_btn)
 
-        backup_btn = QPushButton("Backup DB")
-        backup_btn.setIcon(self.style().standardIcon(QStyle.SP_DriveHDIcon))
+        backup_btn = self.action_button("Backup", QStyle.SP_DriveHDIcon)
         backup_btn.clicked.connect(self.backup_db)
-        top_layout.addWidget(backup_btn)
+        header_layout.addWidget(backup_btn)
 
-        main_layout.addLayout(top_layout)
+        main_layout.addWidget(header)
+
+        table_card = QFrame()
+        table_card.setStyleSheet("""
+            QFrame {
+                background: white;
+                border-radius: 14px;
+            }
+        """)
+        table_card.setGraphicsEffect(header_shadow)
+
+        table_layout = QVBoxLayout(table_card)
+        table_layout.setContentsMargins(20, 20, 20, 20)
 
         self.table = QTableWidget()
         self.table.setColumnCount(7)
         self.table.setHorizontalHeaderLabels([
-            "ID", "Product", "Qty",
+            "ID", "Product", "Quantity",
             "Avg Cost", "Last Purchase",
             "Last Sale", "Profit"
         ])
         self.table.setEditTriggers(self.table.NoEditTriggers)
         self.table.setSelectionBehavior(self.table.SelectRows)
-        main_layout.addWidget(self.table, stretch=1)
+        self.table.setAlternatingRowColors(True)
+        self.table.verticalHeader().setVisible(False)
+        self.table.setStyleSheet("""
+            QTableWidget {
+                border: none;
+                font-size: 13px;
+                background: white;
+                alternate-background-color: #f6f8fb;
+            }
+            QHeaderView::section {
+                background: #f0f3f8;
+                padding: 10px;
+                font-weight: bold;
+                border: none;
+                color: #333;
+            }
+        """)
+
+        table_layout.addWidget(self.table)
+        main_layout.addWidget(table_card, stretch=1)
 
         btn_row = QHBoxLayout()
+        btn_row.setSpacing(14)
 
-        def btn(text, icon):
-            b = QPushButton(text)
-            b.setIcon(self.style().standardIcon(icon))
-            return b
-
-        add_product_btn = btn("Add Product", QStyle.SP_FileDialogNewFolder)
-        add_product_btn.clicked.connect(self.add_product)
-        btn_row.addWidget(add_product_btn)
-
-        edit_product_btn = btn("Edit Product", QStyle.SP_FileDialogContentsView)
-        edit_product_btn.clicked.connect(self.edit_product)
-        btn_row.addWidget(edit_product_btn)
-
-        adjust_stock_btn = btn("Adjust Stock", QStyle.SP_BrowserReload)
-        adjust_stock_btn.clicked.connect(self.adjust_stock)
-        btn_row.addWidget(adjust_stock_btn)
-
-        add_purchase_btn = btn("Add Purchase", QStyle.SP_ArrowDown)
-        add_purchase_btn.clicked.connect(self.add_purchase)
-        btn_row.addWidget(add_purchase_btn)
-
-        add_sale_btn = btn("Add Sale", QStyle.SP_ArrowUp)
-        add_sale_btn.clicked.connect(self.add_sale)
-        btn_row.addWidget(add_sale_btn)
-
-        show_sales_btn = btn("Show Sales", QStyle.SP_FileIcon)
-        show_sales_btn.clicked.connect(self.open_show_sales)
-        btn_row.addWidget(show_sales_btn)
-
-        profit_btn = btn("Profit Report", QStyle.SP_ComputerIcon)
-        profit_btn.clicked.connect(self.open_profit_report)
-        btn_row.addWidget(profit_btn)
+        btn_row.addWidget(self.action_button("Add Product", QStyle.SP_FileDialogNewFolder, self.add_product))
+        btn_row.addWidget(self.action_button("Edit Product", QStyle.SP_FileDialogContentsView, self.edit_product))
+        btn_row.addWidget(self.action_button("Adjust Stock", QStyle.SP_BrowserReload, self.adjust_stock))
+        btn_row.addWidget(self.action_button("Add Purchase", QStyle.SP_ArrowDown, self.add_purchase))
+        btn_row.addWidget(self.action_button("Add Sale", QStyle.SP_ArrowUp, self.add_sale))
+        btn_row.addWidget(self.action_button("Show Sales", QStyle.SP_FileIcon, self.open_show_sales))
+        btn_row.addWidget(self.action_button("Profit Report", QStyle.SP_ComputerIcon, self.open_profit_report))
 
         btn_row.addStretch()
         main_layout.addLayout(btn_row)
 
-        self.setLayout(main_layout)
+    def action_button(self, text, icon, slot=None):
+        b = QPushButton(text)
+        b.setIcon(self.style().standardIcon(icon))
+        b.setCursor(Qt.PointingHandCursor)
+        b.setMinimumHeight(42)
+        b.setStyleSheet("""
+            QPushButton {
+                background: #4A90E2;
+                color: white;
+                padding: 10px 16px;
+                border-radius: 8px;
+                font-size: 13px;
+                font-weight: bold;
+            }
+            QPushButton:hover {
+                background: #3b7ac7;
+            }
+        """)
+        if slot:
+            b.clicked.connect(slot)
+        return b
 
     def load_shops(self):
         self.shop_combo.clear()
         shops = self.controller.get_shops()
-    
         for s in shops:
             self.shop_combo.addItem(s["shop_name"], s["shop_id"])
-    
         if shops:
-            self.shop_combo.setCurrentIndex(0)
             self.load_products_for_current_shop()
 
-
-    def on_shop_changed(self, idx):
+    def on_shop_changed(self):
         self.load_products_for_current_shop()
 
     def reload_current_shop(self):
         self.load_products_for_current_shop()
-        QMessageBox.information(self, "Refreshed", "Data refreshed!")
+        QMessageBox.information(self, "Refreshed", "Data refreshed successfully.")
 
     def load_products_for_current_shop(self):
         shop_id = self.shop_combo.currentData()
-        if shop_id is None:
-            self.table.setRowCount(0)
-            return
-    
-        rows = self.controller.get_products_for_shop(shop_id)
+        rows = self.controller.get_products_for_shop(shop_id) if shop_id else []
         self.table.setRowCount(len(rows))
-    
-        for row, p in enumerate(rows):
-            self.table.setItem(row, 0, QTableWidgetItem(str(p["product_id"])))
-            self.table.setItem(row, 1, QTableWidgetItem(p["product_name"]))
-            self.table.setItem(row, 2, QTableWidgetItem(str(p["quantity"])))
-    
-            self.table.setItem(row, 3, QTableWidgetItem(
-                f"{p['avg_cost']:.2f}" if p["avg_cost"] else "-"
-            ))
-            self.table.setItem(row, 4, QTableWidgetItem(
-                f"{p['last_purchase']:.2f}" if p["last_purchase"] else "-"
-            ))
-            self.table.setItem(row, 5, QTableWidgetItem(
-                f"{p['last_sale']:.2f}" if p["last_sale"] else "-"
-            ))
-    
-            profit_item = QTableWidgetItem(
-                "N/A" if p["profit"] is None else f"{p['profit']:.2f}"
-            )
-    
-            if p["profit"] is not None:
-                profit_item.setForeground(
-                    QColor("green") if p["profit"] > 0 else QColor("red")
-                )
-    
-            self.table.setItem(row, 6, profit_item)
 
+        for r, p in enumerate(rows):
+            self.table.setItem(r, 0, QTableWidgetItem(str(p["product_id"])))
+            self.table.setItem(r, 1, QTableWidgetItem(p["product_name"]))
+            self.table.setItem(r, 2, QTableWidgetItem(str(p["quantity"])))
+            self.table.setItem(r, 3, QTableWidgetItem(f"{p['avg_cost']:.2f}" if p["avg_cost"] else "-"))
+            self.table.setItem(r, 4, QTableWidgetItem(f"{p['last_purchase']:.2f}" if p["last_purchase"] else "-"))
+            self.table.setItem(r, 5, QTableWidgetItem(f"{p['last_sale']:.2f}" if p["last_sale"] else "-"))
+
+            profit = QTableWidgetItem("N/A" if p["profit"] is None else f"{p['profit']:.2f}")
+            if p["profit"] is not None:
+                profit.setForeground(QColor("#1a9c4b") if p["profit"] > 0 else QColor("#d64545"))
+            self.table.setItem(r, 6, profit)
 
     def add_product(self):
-        self.add_product_window = AddProductWindow()
-        self.add_product_window.show()
+            self.add_product_window = AddProductWindow()
+            self.add_product_window.show()
 
     def edit_product(self):
         sel = self.table.currentRow()

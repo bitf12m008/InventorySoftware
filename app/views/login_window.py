@@ -99,6 +99,8 @@ class LoginWindow(QWidget):
                 border: 1.4px solid #4A90E2;
             }
         """)
+        self.password_input.returnPressed.connect(self.handle_login)
+
         card_layout.addWidget(self.password_input)
 
         login_btn = QPushButton("Sign In")
