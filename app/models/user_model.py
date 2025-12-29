@@ -32,3 +32,30 @@ class UserModel:
             "username": row["username"],
             "role": row["role"]
         }
+    
+    @staticmethod
+    def create(username, password_hash, role):
+        conn = sqlite3.connect(DB_PATH)
+        cur = conn.cursor()
+
+        cur.execute("""
+            INSERT INTO Users (username, password_hash, role)
+            VALUES (?, ?, ?)
+        """, (username, password_hash, role))
+
+        conn.commit()
+        conn.close()
+
+    @staticmethod
+    def exists(username):
+        conn = sqlite3.connect(DB_PATH)
+        cur = conn.cursor()
+
+        cur.execute(
+            "SELECT 1 FROM Users WHERE username=?",
+            (username,)
+        )
+        exists = cur.fetchone() is not None
+
+        conn.close()
+        return exists

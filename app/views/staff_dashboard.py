@@ -1,30 +1,24 @@
-import sys, datetime
+import sys
 from PyQt5.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
     QComboBox, QTableWidget, QTableWidgetItem, QMessageBox,
-    QFileDialog, QFrame, QGraphicsDropShadowEffect, QStyle
+    QFrame, QGraphicsDropShadowEffect, QStyle
 )
 from PyQt5.QtGui import QFont, QColor
 from PyQt5.QtCore import Qt
-from app.controllers.dashboard_controller import DashboardController
-from app.views.add_product_window import AddProductWindow
-from app.views.edit_product_window import EditProductWindow
-from app.views.adjust_stock_window import AdjustStockWindow
-from app.views.add_sale_window import AddSaleWindow
-from app.views.add_purchase_window import AddPurchaseWindow
-from app.views.show_sales_window import ShowSalesWindow
-from app.views.profit_report_window import ProfitReportWindow
-from app.views.weekly_profit_window import WeeklyProfitWindow
-from app.views.add_staff_window import AddStaffWindow
 
-class AdminDashboard(QWidget):
+from app.controllers.dashboard_controller import DashboardController
+from app.views.add_sale_window import AddSaleWindow
+from app.views.show_sales_window import ShowSalesWindow
+
+class StaffDashboard(QWidget):
     def __init__(self, user_info=None):
         super().__init__()
         self.user_info = user_info or {}
         self.controller = DashboardController()
 
-        self.setWindowTitle("Admin Dashboard - Inventory")
-        self.resize(1300, 760)
+        self.setWindowTitle("Staff Dashboard - Inventory")
+        self.resize(1200, 720)
         self.setStyleSheet("background: #eef1f6;")
 
         self.setup_ui()
@@ -42,18 +36,18 @@ class AdminDashboard(QWidget):
                 border-radius: 14px;
             }
         """)
-        header_shadow = QGraphicsDropShadowEffect()
-        header_shadow.setBlurRadius(20)
-        header_shadow.setYOffset(3)
-        header_shadow.setColor(QColor(0, 0, 0, 60))
-        header.setGraphicsEffect(header_shadow)
+
+        shadow = QGraphicsDropShadowEffect()
+        shadow.setBlurRadius(20)
+        shadow.setYOffset(3)
+        shadow.setColor(QColor(0, 0, 0, 60))
+        header.setGraphicsEffect(shadow)
 
         header_layout = QHBoxLayout(header)
         header_layout.setContentsMargins(24, 18, 24, 18)
 
-        title = QLabel("Admin Dashboard")
+        title = QLabel("Staff Dashboard")
         title.setFont(QFont("Segoe UI Semibold", 22))
-        title.setStyleSheet("color: #222;")
         header_layout.addWidget(title)
 
         header_layout.addStretch()
@@ -76,13 +70,8 @@ class AdminDashboard(QWidget):
         """)
         header_layout.addWidget(self.shop_combo)
 
-        refresh_btn = self.action_button("Refresh", QStyle.SP_BrowserReload)
-        refresh_btn.clicked.connect(self.reload_current_shop)
+        refresh_btn = self.action_button("Refresh", QStyle.SP_BrowserReload, self.reload_current_shop)
         header_layout.addWidget(refresh_btn)
-
-        backup_btn = self.action_button("Backup", QStyle.SP_DriveHDIcon)
-        backup_btn.clicked.connect(self.backup_db)
-        header_layout.addWidget(backup_btn)
 
         main_layout.addWidget(header)
 
@@ -93,7 +82,7 @@ class AdminDashboard(QWidget):
                 border-radius: 14px;
             }
         """)
-        table_card.setGraphicsEffect(header_shadow)
+        table_card.setGraphicsEffect(shadow)
 
         table_layout = QVBoxLayout(table_card)
         table_layout.setContentsMargins(20, 20, 20, 20)
@@ -131,17 +120,8 @@ class AdminDashboard(QWidget):
         btn_row = QHBoxLayout()
         btn_row.setSpacing(14)
 
-        btn_row.addWidget(self.action_button("Add Product", QStyle.SP_FileDialogNewFolder, self.add_product))
-        btn_row.addWidget(self.action_button("Edit Product", QStyle.SP_FileDialogContentsView, self.edit_product))
-        btn_row.addWidget(self.action_button("Adjust Stock", QStyle.SP_BrowserReload, self.adjust_stock))
-        btn_row.addWidget(self.action_button("Add Purchase", QStyle.SP_ArrowDown, self.add_purchase))
         btn_row.addWidget(self.action_button("Add Sale", QStyle.SP_ArrowUp, self.add_sale))
         btn_row.addWidget(self.action_button("Show Sales", QStyle.SP_FileIcon, self.open_show_sales))
-        btn_row.addWidget(self.action_button("Profit Report", QStyle.SP_ComputerIcon, self.open_profit_report))
-        btn_row.addWidget(self.action_button("Weekly Profit", QStyle.SP_ComputerIcon, self.open_weekly_profit))
-
-        if self.user_info.get("role") == "admin":
-           btn_row.addWidget(self.action_button("Add Staff", QStyle.SP_ArrowDown, self.open_add_staff))
 
         btn_row.addStretch()
         main_layout.addLayout(btn_row)
@@ -196,77 +176,23 @@ class AdminDashboard(QWidget):
             self.table.setItem(r, 4, QTableWidgetItem(f"{p['last_purchase']:.2f}" if p["last_purchase"] else "-"))
             self.table.setItem(r, 5, QTableWidgetItem(f"{p['last_sale']:.2f}" if p["last_sale"] else "-"))
 
-            profit = QTableWidgetItem("N/A" if p["profit"] is None else f"{p['profit']:.2f}")
-            if p["profit"] is not None:
-                profit.setForeground(QColor("#1a9c4b") if p["profit"] > 0 else QColor("#d64545"))
+            profit = QTableWidgetItem("-")
+            profit.setForeground(QColor("#999"))
             self.table.setItem(r, 6, profit)
 
-    def add_product(self):
-            self.add_product_window = AddProductWindow()
-            self.add_product_window.show()
-
-    def edit_product(self):
-        sel = self.table.currentRow()
-        if sel < 0:
-            QMessageBox.warning(self, "Select", "Select a product first.")
-            return
-        pid = int(self.table.item(sel, 0).text())
-        self.edit_product_window = EditProductWindow(pid)
-        self.edit_product_window.show()
-
-    def adjust_stock(self):
-        sel = self.table.currentRow()
-        if sel < 0:
-            QMessageBox.warning(self, "Select", "Select a product first.")
-            return
-        pid = int(self.table.item(sel, 0).text())
-        shop_id = self.shop_combo.currentData()
-        name = self.table.item(sel, 1).text()
-        self.adjust_stock_window = AdjustStockWindow(pid, shop_id, name)
-        self.adjust_stock_window.show()
-
-    def add_purchase(self):
-        self.add_purchase_window = AddPurchaseWindow()
-        self.add_purchase_window.show()
 
     def add_sale(self):
-        self.add_sale_window = AddSaleWindow()
-        self.add_sale_window.show()
+        self.sale_window = AddSaleWindow()
+        self.sale_window.show()
 
     def open_show_sales(self):
         self.sales_window = ShowSalesWindow()
         self.sales_window.show()
 
-    def open_profit_report(self):
-        self.profit_window = ProfitReportWindow()
-        self.profit_window.show()
-
-    def open_weekly_profit(self):
-        self.weekly_profit_window = WeeklyProfitWindow()
-        self.weekly_profit_window.show()
-
-    def open_add_staff(self):
-        self.staff_window = AddStaffWindow()
-        self.staff_window.show()
-
-    def backup_db(self):
-        ts = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-        default = f"inventory_backup_{ts}.db"
-        path, _ = QFileDialog.getSaveFileName(self, "Save Backup", default, "SQLite DB (*.db)")
-        if not path:
-            return
-
-        try:
-            from shutil import copyfile
-            copyfile(DB_PATH, path)
-            QMessageBox.information(self, "Backup", f"Saved:\n{path}")
-        except Exception as e:
-            QMessageBox.critical(self, "Error", str(e))
-
 
 if __name__ == "__main__":
     from PyQt5.QtWidgets import QApplication
     app = QApplication(sys.argv)
-    w = AdminDashboard()
+    w = StaffDashboard({"username": "staff"})
     w.show()
     sys.exit(app.exec_())
