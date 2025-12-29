@@ -15,7 +15,7 @@ from app.views.add_purchase_window import AddPurchaseWindow
 from app.views.show_sales_window import ShowSalesWindow
 from app.views.profit_report_window import ProfitReportWindow
 from app.views.weekly_profit_window import WeeklyProfitWindow
-from app.views.add_staff_window import AddStaffWindow
+from app.views.staff_management_window import StaffManagementWindow
 
 class AdminDashboard(QWidget):
     def __init__(self, user_info=None):
@@ -141,7 +141,7 @@ class AdminDashboard(QWidget):
         btn_row.addWidget(self.action_button("Weekly Profit", QStyle.SP_ComputerIcon, self.open_weekly_profit))
 
         if self.user_info.get("role") == "admin":
-           btn_row.addWidget(self.action_button("Add Staff", QStyle.SP_ArrowDown, self.open_add_staff))
+           btn_row.addWidget(self.action_button("Staff Management", QStyle.SP_ArrowDown, self.open_staff_management))
 
         btn_row.addStretch()
         main_layout.addLayout(btn_row)
@@ -245,9 +245,9 @@ class AdminDashboard(QWidget):
         self.weekly_profit_window = WeeklyProfitWindow()
         self.weekly_profit_window.show()
 
-    def open_add_staff(self):
-        self.staff_window = AddStaffWindow()
-        self.staff_window.show()
+    def open_staff_management(self):
+        self.staff_mgmt = StaffManagementWindow()
+        self.staff_mgmt.show()
 
     def backup_db(self):
         ts = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")

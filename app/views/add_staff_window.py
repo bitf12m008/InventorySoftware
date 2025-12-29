@@ -1,5 +1,3 @@
-# app/views/add_staff_window.py
-
 from PyQt5.QtWidgets import (
     QWidget, QVBoxLayout, QLabel, QLineEdit,
     QPushButton, QMessageBox, QFrame, QGraphicsDropShadowEffect
@@ -10,8 +8,10 @@ from PyQt5.QtGui import QFont, QColor
 from app.controllers.staff_controller import StaffController
 
 class AddStaffWindow(QWidget):
-    def __init__(self):
+    def __init__(self, on_success=None):
         super().__init__()
+
+        self.on_success = on_success
 
         self.setWindowTitle("Add Staff Account")
         self.setFixedSize(460, 350)
@@ -134,11 +134,16 @@ class AddStaffWindow(QWidget):
 
         try:
             StaffController.create_staff(username, password)
+
             QMessageBox.information(
                 self,
                 "Success",
                 "Staff account created successfully"
             )
+
+            if self.on_success:
+                self.on_success()
+
             self.close()
 
         except ValueError as e:
