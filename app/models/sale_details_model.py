@@ -1,4 +1,5 @@
 import sqlite3
+from datetime import datetime
 from app.db.database_init import DB_PATH
 
 class SaleDetailsModel:
@@ -17,7 +18,18 @@ class SaleDetailsModel:
 
         row = cur.fetchone()
         conn.close()
-        return row
+
+        if not row:
+            return None
+
+        dt = datetime.fromisoformat(row["date"])
+
+        return {
+            "sale_id": row["sale_id"],
+            "shop_id": row["shop_id"],
+            "date": dt.strftime("%B %d, %Y %I:%M %p"),
+            "grand_total": row["grand_total"]
+        }
 
     @staticmethod
     def get_sale_items(sale_id):

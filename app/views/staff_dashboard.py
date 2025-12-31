@@ -161,7 +161,7 @@ class StaffDashboard(QWidget):
 
     def reload_current_shop(self):
         self.load_products_for_current_shop()
-        QMessageBox.information(self, "Refreshed", "Data refreshed successfully.")
+        # QMessageBox.information(self, "Refreshed", "Data refreshed successfully.")
 
     def load_products_for_current_shop(self):
         shop_id = self.shop_combo.currentData()
@@ -182,7 +182,7 @@ class StaffDashboard(QWidget):
 
 
     def add_sale(self):
-        self.sale_window = AddSaleWindow()
+        self.sale_window = AddSaleWindow(on_success=self.reload_current_shop)
         self.sale_window.show()
 
     def open_show_sales(self):

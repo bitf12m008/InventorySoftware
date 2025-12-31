@@ -9,9 +9,10 @@ from PyQt5.QtGui import QFont, QColor
 from app.controllers.product_controller import ProductController
 
 class AddProductWindow(QWidget):
-    def __init__(self):
+    def __init__(self, on_success=None):
         super().__init__()
 
+        self.on_success = on_success
         self.controller = ProductController()
 
         self.setWindowTitle("Add New Product")
@@ -162,4 +163,5 @@ class AddProductWindow(QWidget):
         self.controller.create_product(name, selected_shop_ids)
 
         QMessageBox.information(self, "Success", "Product added successfully.")
+        self.on_success()
         self.close()

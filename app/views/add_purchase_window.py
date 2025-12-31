@@ -9,10 +9,11 @@ from PyQt5.QtGui import QFont, QColor
 from app.controllers.purchase_controller import PurchaseController
 
 class AddPurchaseWindow(QWidget):
-    def __init__(self):
+    def __init__(self, on_success=None):
         super().__init__()
 
         self.controller = PurchaseController()
+        self.on_success=on_success
 
         self.setWindowTitle("Add Purchase")
         self.setFixedSize(980, 620)
@@ -251,6 +252,7 @@ class AddPurchaseWindow(QWidget):
         try:
             self.controller.save_purchase(shop_id)
             QMessageBox.information(self, "Success", "Purchase saved successfully!")
+            self.on_success()
             self.close()
         except ValueError as e:
             QMessageBox.warning(self, "Error", str(e))

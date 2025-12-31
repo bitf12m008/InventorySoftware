@@ -1,13 +1,14 @@
 Understand and Refactor existing implementation
 Beautify UI
 profit loss weekly sale report
+offline backup done
+add other accounts [for staff, for admin already exist]
 
 profit loss per inventory // not now
 
 
-database backup plans [local, cloud, auto, by admin etc..]
+database backup plans [cloud, auto, by admin etc..]
 
-add other accounts [for staff, for admin already exist]
 
 
 ============================================

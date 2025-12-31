@@ -182,7 +182,7 @@ class AdminDashboard(QWidget):
 
     def reload_current_shop(self):
         self.load_products_for_current_shop()
-        QMessageBox.information(self, "Refreshed", "Data refreshed successfully.")
+        # QMessageBox.information(self, "Refreshed", "Data refreshed successfully.")
 
     def load_products_for_current_shop(self):
         shop_id = self.shop_combo.currentData()
@@ -203,7 +203,9 @@ class AdminDashboard(QWidget):
             self.table.setItem(r, 6, profit)
 
     def add_product(self):
-            self.add_product_window = AddProductWindow()
+            self.add_product_window = AddProductWindow(
+                on_success=self.reload_current_shop
+            )
             self.add_product_window.show()
 
     def edit_product(self):
@@ -212,7 +214,7 @@ class AdminDashboard(QWidget):
             QMessageBox.warning(self, "Select", "Select a product first.")
             return
         pid = int(self.table.item(sel, 0).text())
-        self.edit_product_window = EditProductWindow(pid)
+        self.edit_product_window = EditProductWindow(pid, on_success=self.reload_current_shop)
         self.edit_product_window.show()
 
     def adjust_stock(self):
@@ -223,15 +225,15 @@ class AdminDashboard(QWidget):
         pid = int(self.table.item(sel, 0).text())
         shop_id = self.shop_combo.currentData()
         name = self.table.item(sel, 1).text()
-        self.adjust_stock_window = AdjustStockWindow(pid, shop_id, name)
+        self.adjust_stock_window = AdjustStockWindow(pid, shop_id, name, on_success=self.reload_current_shop)
         self.adjust_stock_window.show()
 
     def add_purchase(self):
-        self.add_purchase_window = AddPurchaseWindow()
+        self.add_purchase_window = AddPurchaseWindow(on_success=self.reload_current_shop)
         self.add_purchase_window.show()
 
     def add_sale(self):
-        self.add_sale_window = AddSaleWindow()
+        self.add_sale_window = AddSaleWindow(on_success=self.reload_current_shop)
         self.add_sale_window.show()
 
     def open_show_sales(self):

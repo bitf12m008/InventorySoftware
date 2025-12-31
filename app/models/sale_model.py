@@ -1,4 +1,5 @@
 import sqlite3
+from datetime import datetime
 from app.db.database_init import DB_PATH
 
 class SaleModel:
@@ -49,7 +50,16 @@ class SaleModel:
 
         rows = cur.fetchall()
         conn.close()
-        return rows
+        formatted = []
+        for r in rows:
+            dt = datetime.fromisoformat(r["date"])
+            formatted.append({
+                "sale_id": r["sale_id"],
+                "date": dt.strftime("%B %d, %Y %I:%M %p"),
+                "grand_total": r["grand_total"]
+            })
+
+        return formatted
     
     @staticmethod
     def create_sale(shop_id, date, items):

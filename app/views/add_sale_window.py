@@ -9,10 +9,11 @@ from PyQt5.QtGui import QFont, QColor
 from app.controllers.sale_controller import SaleController
 
 class AddSaleWindow(QWidget):
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, on_success=None):
         super().__init__(parent)
 
         self.controller = SaleController()
+        self.on_success=on_success
 
         self.setWindowTitle("Add Sale (Invoice)")
         self.setFixedSize(1000, 650)
@@ -327,6 +328,7 @@ class AddSaleWindow(QWidget):
                 "Success",
                 f"Sale saved successfully!\nInvoice #{sale_id}"
             )
+            self.on_success()
             self.close()
         except ValueError as e:
             QMessageBox.warning(self, "Error", str(e))

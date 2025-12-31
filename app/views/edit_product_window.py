@@ -9,9 +9,10 @@ from PyQt5.QtGui import QFont, QColor
 from app.models.product_model import ProductModel
 
 class EditProductWindow(QWidget):
-    def __init__(self, product_id):
+    def __init__(self, product_id, on_success=None):
         super().__init__()
 
+        self.on_success = on_success
         self.product_id = product_id
 
         self.setWindowTitle("Edit Product")
@@ -131,4 +132,5 @@ class EditProductWindow(QWidget):
 
         ProductModel.update_name(self.product_id, new_name)
         QMessageBox.information(self, "Success", "Product updated successfully.")
+        self.on_success()
         self.close()

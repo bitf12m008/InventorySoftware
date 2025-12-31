@@ -9,11 +9,12 @@ from PyQt5.QtGui import QFont, QColor
 from app.models.stock_model import StockModel
 
 class AdjustStockWindow(QWidget):
-    def __init__(self, product_id, shop_id, product_name):
+    def __init__(self, product_id, shop_id, product_name, on_success=None):
         super().__init__()
 
         self.product_id = product_id
         self.shop_id = shop_id
+        self.on_success = on_success
 
         self.setWindowTitle(f"Adjust Stock – {product_name}")
         self.setFixedSize(460, 320)
@@ -123,4 +124,5 @@ class AdjustStockWindow(QWidget):
         new_qty = self.qty_spin.value()
         StockModel.set_quantity(self.product_id, self.shop_id, new_qty)
         QMessageBox.information(self, "Saved", "Stock updated successfully.")
+        self.on_success()
         self.close()
