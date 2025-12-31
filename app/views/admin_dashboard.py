@@ -1,8 +1,8 @@
-import sys, datetime
+import sys
 from PyQt5.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
     QComboBox, QTableWidget, QTableWidgetItem, QMessageBox,
-    QFileDialog, QFrame, QGraphicsDropShadowEffect, QStyle
+    QFrame, QGraphicsDropShadowEffect, QStyle
 )
 from PyQt5.QtGui import QFont, QColor
 from PyQt5.QtCore import Qt
@@ -16,6 +16,7 @@ from app.views.show_sales_window import ShowSalesWindow
 from app.views.profit_report_window import ProfitReportWindow
 from app.views.weekly_profit_window import WeeklyProfitWindow
 from app.views.staff_management_window import StaffManagementWindow
+from app.controllers.backup_controller import BackupController
 
 class AdminDashboard(QWidget):
     def __init__(self, user_info=None):
@@ -250,16 +251,9 @@ class AdminDashboard(QWidget):
         self.staff_mgmt.show()
 
     def backup_db(self):
-        ts = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-        default = f"inventory_backup_{ts}.db"
-        path, _ = QFileDialog.getSaveFileName(self, "Save Backup", default, "SQLite DB (*.db)")
-        if not path:
-            return
-
         try:
-            from shutil import copyfile
-            copyfile(DB_PATH, path)
-            QMessageBox.information(self, "Backup", f"Saved:\n{path}")
+            path = BackupController.backup_forced()
+            QMessageBox.information(self, "Backup", f"Backup saved:\n{path}")
         except Exception as e:
             QMessageBox.critical(self, "Error", str(e))
 
