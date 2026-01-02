@@ -2,7 +2,7 @@ import sys
 from PyQt5.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
     QComboBox, QTableWidget, QTableWidgetItem, QMessageBox,
-    QFrame, QGraphicsDropShadowEffect, QStyle
+    QFrame, QGraphicsDropShadowEffect, QStyle, QHeaderView
 )
 from PyQt5.QtGui import QFont, QColor
 from PyQt5.QtCore import Qt
@@ -25,7 +25,7 @@ class AdminDashboard(QWidget):
         self.controller = DashboardController()
 
         self.setWindowTitle("Admin Dashboard - Inventory")
-        self.resize(1300, 760)
+        self.showMaximized()
         self.setStyleSheet("background: #eef1f6;")
 
         self.setup_ui()
@@ -110,16 +110,27 @@ class AdminDashboard(QWidget):
         self.table.setSelectionBehavior(self.table.SelectRows)
         self.table.setAlternatingRowColors(True)
         self.table.verticalHeader().setVisible(False)
+        self.table.setSortingEnabled(True)
+        self.table.verticalHeader().setDefaultSectionSize(44)
+        header_font = QFont("Segoe UI Semibold", 11)
+        self.table.horizontalHeader().setFont(header_font)
+        self.table.horizontalHeader().setFixedHeight(48)
+        self.table.horizontalHeader().setStretchLastSection(True)
+        self.table.horizontalHeader().setSectionResizeMode(
+            QHeaderView.Stretch
+        )
+        table_font = QFont("Segoe UI", 11)
+        self.table.setFont(table_font)
         self.table.setStyleSheet("""
             QTableWidget {
                 border: none;
-                font-size: 13px;
+                font-size: 11pt;
                 background: white;
                 alternate-background-color: #f6f8fb;
             }
             QHeaderView::section {
                 background: #f0f3f8;
-                padding: 10px;
+                padding: 12px;
                 font-weight: bold;
                 border: none;
                 color: #333;
@@ -151,7 +162,8 @@ class AdminDashboard(QWidget):
         b = QPushButton(text)
         b.setIcon(self.style().standardIcon(icon))
         b.setCursor(Qt.PointingHandCursor)
-        b.setMinimumHeight(42)
+        b.setMinimumHeight(48)
+        b.setFont(QFont("Segoe UI", 11, QFont.Bold))
         b.setStyleSheet("""
             QPushButton {
                 background: #4A90E2;

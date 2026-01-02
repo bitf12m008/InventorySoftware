@@ -48,7 +48,7 @@ class ProductModel:
             FROM Products p
             JOIN Stock s ON p.product_id = s.product_id
             WHERE s.shop_id = ?
-            ORDER BY p.name
+            ORDER BY product_name COLLATE NOCASE ASC
         """, (shop_id,))
 
         rows = cur.fetchall()

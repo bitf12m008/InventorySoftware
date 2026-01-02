@@ -1,9 +1,11 @@
+import os
 from PyQt5.QtWidgets import (
     QWidget, QLabel, QLineEdit, QPushButton,
-    QVBoxLayout, QMessageBox, QFrame, QGraphicsDropShadowEffect
+    QVBoxLayout, QMessageBox, QFrame,
+    QGraphicsDropShadowEffect, QAction
 )
 from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QFont, QColor
+from PyQt5.QtGui import QFont, QColor, QIcon
 from app.controllers.auth_controller import AuthController
 
 class LoginWindow(QWidget):
@@ -17,7 +19,7 @@ class LoginWindow(QWidget):
         self.setFixedSize(480, 520)
         self.setStyleSheet("background: #e6e9ef;")
 
-        main_layout = QVBoxLayout()
+        main_layout = QVBoxLayout(self)
         main_layout.setContentsMargins(40, 40, 40, 40)
         main_layout.setAlignment(Qt.AlignCenter)
 
@@ -31,34 +33,30 @@ class LoginWindow(QWidget):
 
         shadow = QGraphicsDropShadowEffect()
         shadow.setBlurRadius(26)
-        shadow.setXOffset(0)
         shadow.setYOffset(4)
         shadow.setColor(QColor(0, 0, 0, 80))
         card.setGraphicsEffect(shadow)
 
-        card_layout = QVBoxLayout()
+        card_layout = QVBoxLayout(card)
         card_layout.setContentsMargins(40, 40, 40, 40)
         card_layout.setSpacing(24)
 
         title = QLabel("Welcome Back")
         title.setFont(QFont("Segoe UI Semibold", 24))
         title.setAlignment(Qt.AlignCenter)
-        title.setMinimumHeight(40)
         title.setStyleSheet("color: #222;")
         card_layout.addWidget(title)
 
         subtitle = QLabel("Sign in to continue")
         subtitle.setFont(QFont("Segoe UI", 12))
-        subtitle.setMinimumHeight(30)
         subtitle.setAlignment(Qt.AlignCenter)
         subtitle.setStyleSheet("color: #555; margin-top: -6px;")
         card_layout.addWidget(subtitle)
 
-        username_label = QLabel("Username")
-        username_label.setFont(QFont("Segoe UI", 11))
-        username_label.setMinimumHeight(22)
-        username_label.setStyleSheet("color: #444;")
-        card_layout.addWidget(username_label)
+        user_label = QLabel("Username")
+        user_label.setFont(QFont("Segoe UI", 11))
+        user_label.setStyleSheet("color: #444;")
+        card_layout.addWidget(user_label)
 
         self.username_input = QLineEdit()
         self.username_input.setPlaceholderText("Enter your username")
@@ -69,7 +67,6 @@ class LoginWindow(QWidget):
                 border-radius: 8px;
                 font-size: 14px;
                 border: 1px solid #c9c9c9;
-                background: white;
             }
             QLineEdit:focus {
                 border: 1.4px solid #4A90E2;
@@ -77,11 +74,10 @@ class LoginWindow(QWidget):
         """)
         card_layout.addWidget(self.username_input)
 
-        password_label = QLabel("Password")
-        password_label.setFont(QFont("Segoe UI", 11))
-        password_label.setMinimumHeight(22)
-        password_label.setStyleSheet("color: #444;")
-        card_layout.addWidget(password_label)
+        pass_label = QLabel("Password")
+        pass_label.setFont(QFont("Segoe UI", 11))
+        pass_label.setStyleSheet("color: #444;")
+        card_layout.addWidget(pass_label)
 
         self.password_input = QLineEdit()
         self.password_input.setPlaceholderText("Enter your password")
@@ -89,17 +85,32 @@ class LoginWindow(QWidget):
         self.password_input.setMinimumHeight(44)
         self.password_input.setStyleSheet("""
             QLineEdit {
-                padding: 8px 14px;
+                padding: 8px 42px 8px 14px;
                 border-radius: 8px;
                 font-size: 14px;
                 border: 1px solid #c9c9c9;
-                background: white;
             }
             QLineEdit:focus {
                 border: 1.4px solid #4A90E2;
             }
         """)
         self.password_input.returnPressed.connect(self.handle_login)
+
+        base_dir = os.path.dirname(os.path.abspath(__file__))
+        assets_dir = os.path.join(base_dir, "..", "assets")
+
+        self.eye_show_icon = QIcon(os.path.join(assets_dir, "view.png"))
+        self.eye_hide_icon = QIcon(os.path.join(assets_dir, "hide.png"))
+
+        self.eye_action = QAction(self)
+        self.eye_action.setIcon(self.eye_show_icon)
+        self.eye_action.setToolTip("Show password")
+        self.eye_action.triggered.connect(self.toggle_password_visibility)
+
+        self.password_input.addAction(
+            self.eye_action,
+            QLineEdit.TrailingPosition
+        )
 
         card_layout.addWidget(self.password_input)
 
@@ -113,7 +124,6 @@ class LoginWindow(QWidget):
                 border-radius: 8px;
                 font-size: 16px;
                 font-weight: bold;
-                letter-spacing: 0.3px;
             }
             QPushButton:hover {
                 background: #3b7ac7;
@@ -122,9 +132,17 @@ class LoginWindow(QWidget):
         login_btn.clicked.connect(self.handle_login)
         card_layout.addWidget(login_btn)
 
-        card.setLayout(card_layout)
         main_layout.addWidget(card)
-        self.setLayout(main_layout)
+
+    def toggle_password_visibility(self):
+        if self.password_input.echoMode() == QLineEdit.Password:
+            self.password_input.setEchoMode(QLineEdit.Normal)
+            self.eye_action.setIcon(self.eye_hide_icon)
+            self.eye_action.setToolTip("Hide password")
+        else:
+            self.password_input.setEchoMode(QLineEdit.Password)
+            self.eye_action.setIcon(self.eye_show_icon)
+            self.eye_action.setToolTip("Show password")
 
     def handle_login(self):
         username = self.username_input.text().strip()

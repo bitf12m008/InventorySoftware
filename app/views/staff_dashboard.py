@@ -18,7 +18,7 @@ class StaffDashboard(QWidget):
         self.controller = DashboardController()
 
         self.setWindowTitle("Staff Dashboard - Inventory")
-        self.resize(1200, 720)
+        self.showMaximized()
         self.setStyleSheet("background: #eef1f6;")
 
         self.setup_ui()
@@ -58,6 +58,8 @@ class StaffDashboard(QWidget):
 
         self.shop_combo = QComboBox()
         self.shop_combo.setMinimumWidth(220)
+        self.shop_combo.setMinimumHeight(40)
+        self.shop_combo.setFont(QFont("Segoe UI", 11))
         self.shop_combo.currentIndexChanged.connect(self.on_shop_changed)
         self.shop_combo.setStyleSheet("""
             QComboBox {
@@ -101,18 +103,29 @@ class StaffDashboard(QWidget):
         self.table.setStyleSheet("""
             QTableWidget {
                 border: none;
-                font-size: 13px;
+                font-size: 11pt;
                 background: white;
                 alternate-background-color: #f6f8fb;
             }
             QHeaderView::section {
                 background: #f0f3f8;
-                padding: 10px;
+                padding: 12px;
                 font-weight: bold;
                 border: none;
                 color: #333;
             }
         """)
+        self.table.setFont(QFont("Segoe UI", 11))
+        self.table.verticalHeader().setDefaultSectionSize(44)
+
+        header_font = QFont("Segoe UI Semibold", 11)
+        self.table.horizontalHeader().setFont(header_font)
+        self.table.horizontalHeader().setFixedHeight(48)
+
+        self.table.horizontalHeader().setStretchLastSection(True)
+        self.table.horizontalHeader().setSectionResizeMode(
+            self.table.horizontalHeader().Stretch
+        )
 
         table_layout.addWidget(self.table)
         main_layout.addWidget(table_card, stretch=1)
@@ -130,7 +143,8 @@ class StaffDashboard(QWidget):
         b = QPushButton(text)
         b.setIcon(self.style().standardIcon(icon))
         b.setCursor(Qt.PointingHandCursor)
-        b.setMinimumHeight(42)
+        b.setMinimumHeight(48)
+        b.setFont(QFont("Segoe UI", 11, QFont.Bold))
         b.setStyleSheet("""
             QPushButton {
                 background: #4A90E2;
