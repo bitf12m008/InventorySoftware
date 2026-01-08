@@ -1,11 +1,13 @@
 import sys
+import os
 from PyQt5.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
     QComboBox, QTableWidget, QTableWidgetItem, QMessageBox,
-    QFrame, QGraphicsDropShadowEffect, QStyle, QHeaderView
+    QFrame, QGraphicsDropShadowEffect, QStyle, QHeaderView,
+    QLineEdit, QToolButton
 )
-from PyQt5.QtGui import QFont, QColor
-from PyQt5.QtCore import Qt
+from PyQt5.QtGui import QFont, QColor, QIcon
+from PyQt5.QtCore import ( Qt, QPropertyAnimation)
 from app.controllers.dashboard_controller import DashboardController
 from app.views.add_product_window import AddProductWindow
 from app.views.edit_product_window import EditProductWindow
@@ -21,6 +23,7 @@ from app.controllers.backup_controller import BackupController
 class AdminDashboard(QWidget):
     def __init__(self, user_info=None):
         super().__init__()
+        self.all_products = []
         self.user_info = user_info or {}
         self.controller = DashboardController()
 
@@ -73,9 +76,45 @@ class AdminDashboard(QWidget):
                 border: 1px solid #c9c9c9;
                 background: white;
                 font-size: 13px;
+                color: #222;
             }
         """)
         header_layout.addWidget(self.shop_combo)
+
+        self.search_btn = QToolButton()
+        icon = QIcon.fromTheme("edit-find")
+        if icon.isNull():
+            base_dir = os.path.dirname(os.path.abspath(__file__))
+            assets_dir = os.path.join(base_dir, "..", "assets")
+            icon = QIcon(os.path.join(assets_dir, "search.png"))
+
+        self.search_btn.setIcon(icon)
+        self.search_btn.setCursor(Qt.PointingHandCursor)
+        self.search_btn.setStyleSheet("""
+            QToolButton {
+                border: none;
+            }
+        """)
+        self.search_btn.clicked.connect(self.toggle_search)
+        header_layout.addWidget(self.search_btn)
+
+        self.search_input = QLineEdit()
+        self.search_input.installEventFilter(self)
+        self.search_input.setPlaceholderText("Search product...")
+        self.search_input.setMaximumWidth(0)
+        self.search_input.setMinimumHeight(36)
+        self.search_input.setClearButtonEnabled(True)
+        self.search_input.textChanged.connect(self.apply_search_filter)
+        self.search_input.setStyleSheet("""
+            QLineEdit {
+                padding: 6px 12px;
+                border-radius: 8px;
+                border: 1px solid #c9c9c9;
+                background: white;
+                font-size: 13px;
+            }
+        """)
+        header_layout.addWidget(self.search_input)
 
         refresh_btn = self.action_button("Refresh", QStyle.SP_BrowserReload)
         refresh_btn.clicked.connect(self.reload_current_shop)
@@ -158,6 +197,13 @@ class AdminDashboard(QWidget):
         btn_row.addStretch()
         main_layout.addLayout(btn_row)
 
+    def eventFilter(self, obj, event):
+        if obj == self.search_input and event.type() == event.KeyPress:
+            if event.key() == Qt.Key_Escape:
+                self.collapse_search()
+                return True
+        return super().eventFilter(obj, event)
+
     def action_button(self, text, icon, slot=None):
         b = QPushButton(text)
         b.setIcon(self.style().standardIcon(icon))
@@ -181,6 +227,34 @@ class AdminDashboard(QWidget):
             b.clicked.connect(slot)
         return b
 
+    def toggle_search(self):
+        if self.search_input.maximumWidth() == 0:
+            self.expand_search()
+        else:
+            self.collapse_search()
+
+
+    def expand_search(self):
+        self.search_anim = QPropertyAnimation(
+            self.search_input, b"maximumWidth"
+        )
+        self.search_anim.setDuration(200)
+        self.search_anim.setStartValue(0)
+        self.search_anim.setEndValue(260)
+        self.search_anim.start()
+        self.search_input.setFocus()
+
+    def collapse_search(self):
+        self.search_input.clear()
+
+        self.search_anim = QPropertyAnimation(
+            self.search_input, b"maximumWidth"
+        )
+        self.search_anim.setDuration(200)
+        self.search_anim.setStartValue(self.search_input.maximumWidth())
+        self.search_anim.setEndValue(0)
+        self.search_anim.start()
+
     def load_shops(self):
         self.shop_combo.clear()
         shops = self.controller.get_shops()
@@ -196,23 +270,50 @@ class AdminDashboard(QWidget):
         self.load_products_for_current_shop()
         # QMessageBox.information(self, "Refreshed", "Data refreshed successfully.")
 
-    def load_products_for_current_shop(self):
-        shop_id = self.shop_combo.currentData()
-        rows = self.controller.get_products_for_shop(shop_id) if shop_id else []
+    def apply_search_filter(self, text):
+        text = text.strip().lower()
+
+        if not text:
+            rows = self.all_products
+        else:
+            rows = [
+                p for p in self.all_products
+                if text in p["product_name"].lower()
+            ]
+
+        self.populate_table(rows)
+
+    def populate_table(self, rows):
         self.table.setRowCount(len(rows))
 
         for r, p in enumerate(rows):
             self.table.setItem(r, 0, QTableWidgetItem(str(p["product_id"])))
             self.table.setItem(r, 1, QTableWidgetItem(p["product_name"]))
             self.table.setItem(r, 2, QTableWidgetItem(str(p["quantity"])))
-            self.table.setItem(r, 3, QTableWidgetItem(f"{p['avg_cost']:.2f}" if p["avg_cost"] else "-"))
-            self.table.setItem(r, 4, QTableWidgetItem(f"{p['last_purchase']:.2f}" if p["last_purchase"] else "-"))
-            self.table.setItem(r, 5, QTableWidgetItem(f"{p['last_sale']:.2f}" if p["last_sale"] else "-"))
+            self.table.setItem(r, 3, QTableWidgetItem(
+                f"{p['avg_cost']:.2f}" if p["avg_cost"] else "-"
+            ))
+            self.table.setItem(r, 4, QTableWidgetItem(
+                f"{p['last_purchase']:.2f}" if p["last_purchase"] else "-"
+            ))
+            self.table.setItem(r, 5, QTableWidgetItem(
+                f"{p['last_sale']:.2f}" if p["last_sale"] else "-"
+            ))
 
-            profit = QTableWidgetItem("N/A" if p["profit"] is None else f"{p['profit']:.2f}")
+            profit = QTableWidgetItem(
+                "N/A" if p["profit"] is None else f"{p['profit']:.2f}"
+            )
             if p["profit"] is not None:
-                profit.setForeground(QColor("#1a9c4b") if p["profit"] > 0 else QColor("#d64545"))
+                profit.setForeground(
+                    QColor("#1a9c4b") if p["profit"] > 0 else QColor("#d64545")
+                )
             self.table.setItem(r, 6, profit)
+
+    def load_products_for_current_shop(self):
+        shop_id = self.shop_combo.currentData()
+        rows = self.controller.get_products_for_shop(shop_id) if shop_id else []
+        self.all_products = rows
+        self.populate_table(self.all_products)
 
     def add_product(self):
             self.add_product_window = AddProductWindow(

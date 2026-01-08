@@ -1,7 +1,7 @@
 from PyQt5.QtWidgets import (
     QWidget, QVBoxLayout, QLabel, QSpinBox,
     QPushButton, QMessageBox, QHBoxLayout,
-    QFrame, QGraphicsDropShadowEffect
+    QFrame, QGraphicsDropShadowEffect, QToolButton
 )
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont, QColor
@@ -48,13 +48,8 @@ class AdjustStockWindow(QWidget):
         title.setFont(QFont("Segoe UI", 18, QFont.Bold))
         title.setAlignment(Qt.AlignCenter)
         title.setMinimumHeight(48)
-        title.setStyleSheet("""
-            color: #222;
-            padding-top: 6px;
-        """)
+        title.setStyleSheet("color: #222; padding-top: 6px;")
         card_layout.addWidget(title)
-
-        card_layout.addSpacing(6)
 
         subtitle = QLabel(product_name)
         subtitle.setFont(QFont("Segoe UI", 12))
@@ -63,41 +58,84 @@ class AdjustStockWindow(QWidget):
         subtitle.setStyleSheet("color: #666;")
         card_layout.addWidget(subtitle)
 
-        card_layout.addSpacing(24)
+        card_layout.addSpacing(26)
 
         qty_label = QLabel("New Quantity")
         qty_label.setFont(QFont("Segoe UI", 11))
-        qty_label.setMinimumHeight(22)
         qty_label.setStyleSheet("color: #444;")
+
+        qty_container = QFrame()
+        qty_container.setFixedHeight(46)
+        qty_container.setStyleSheet("""
+            QFrame {
+                background: white;
+                border: 1px solid #c9c9c9;
+                border-radius: 8px;
+            }
+        """)
+
+        qty_layout = QHBoxLayout(qty_container)
+        qty_layout.setContentsMargins(10, 4, 10, 4)
+        qty_layout.setSpacing(6)
 
         self.qty_spin = QSpinBox()
         self.qty_spin.setRange(0, 10_000_000)
-        self.qty_spin.setMinimumHeight(46)
-        self.qty_spin.setMinimumWidth(150)
         self.qty_spin.setFont(QFont("Segoe UI", 11))
+        self.qty_spin.setButtonSymbols(QSpinBox.NoButtons)
         self.qty_spin.setStyleSheet("""
             QSpinBox {
-                padding: 8px 12px;
-                border-radius: 8px;
-                border: 1px solid #c9c9c9;
-                background: white;
-            }
-            QSpinBox:focus {
-                border: 1.4px solid #4A90E2;
+                border: none;
+                background: transparent;
+                font-size: 14px;
             }
         """)
 
         current_qty = StockModel.get_quantity(self.product_id, self.shop_id)
         self.qty_spin.setValue(current_qty)
 
+        btn_minus = QToolButton()
+        btn_minus.setText("−")
+        btn_minus.setFont(QFont("Segoe UI", 16, QFont.Bold))
+        btn_minus.setCursor(Qt.PointingHandCursor)
+        btn_minus.setStyleSheet("""
+            QToolButton {
+                border: none;
+                color: #444;
+                padding: 0 6px;
+            }
+            QToolButton:hover {
+                color: #4A90E2;
+            }
+        """)
+        btn_minus.clicked.connect(self.qty_spin.stepDown)
+
+        btn_plus = QToolButton()
+        btn_plus.setText("+")
+        btn_plus.setFont(QFont("Segoe UI", 15, QFont.Bold))
+        btn_plus.setCursor(Qt.PointingHandCursor)
+        btn_plus.setStyleSheet("""
+            QToolButton {
+                border: none;
+                color: #444;
+                padding: 0 6px;
+            }
+            QToolButton:hover {
+                color: #4A90E2;
+            }
+        """)
+        btn_plus.clicked.connect(self.qty_spin.stepUp)
+
+        qty_layout.addWidget(self.qty_spin)
+        qty_layout.addWidget(btn_minus)
+        qty_layout.addWidget(btn_plus)
+
         qty_row = QHBoxLayout()
         qty_row.addWidget(qty_label)
         qty_row.addStretch()
-        qty_row.addWidget(self.qty_spin)
+        qty_row.addWidget(qty_container)
 
         card_layout.addLayout(qty_row)
-
-        card_layout.addSpacing(24)
+        card_layout.addSpacing(28)
 
         save_btn = QPushButton("Save Changes")
         save_btn.setMinimumHeight(50)
@@ -109,7 +147,6 @@ class AdjustStockWindow(QWidget):
                 border-radius: 10px;
                 font-size: 16px;
                 font-weight: bold;
-                margin-top: 12px;
             }
             QPushButton:hover {
                 background: #3b7ac7;
@@ -123,6 +160,10 @@ class AdjustStockWindow(QWidget):
     def save(self):
         new_qty = self.qty_spin.value()
         StockModel.set_quantity(self.product_id, self.shop_id, new_qty)
+
         QMessageBox.information(self, "Saved", "Stock updated successfully.")
-        self.on_success()
+
+        if self.on_success:
+            self.on_success()
+
         self.close()

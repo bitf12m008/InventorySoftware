@@ -1,7 +1,7 @@
 from PyQt5.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QComboBox, QLabel, QPushButton,
     QTableWidget, QSpinBox, QLineEdit, QMessageBox, QFrame,
-    QGraphicsDropShadowEffect
+    QGraphicsDropShadowEffect, QHeaderView
 )
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont, QColor
@@ -13,7 +13,7 @@ class AddPurchaseWindow(QWidget):
         super().__init__()
 
         self.controller = PurchaseController()
-        self.on_success=on_success
+        self.on_success = on_success
 
         self.setWindowTitle("Add Purchase")
         self.setFixedSize(980, 620)
@@ -30,25 +30,19 @@ class AddPurchaseWindow(QWidget):
         main.setAlignment(Qt.AlignTop)
 
         header = QFrame()
-        header.setStyleSheet("""
-            QFrame {
-                background: white;
-                border-radius: 16px;
-            }
-        """)
+        header.setStyleSheet("QFrame { background: white; border-radius: 16px; }")
 
-        header_shadow = QGraphicsDropShadowEffect()
-        header_shadow.setBlurRadius(18)
-        header_shadow.setYOffset(4)
-        header_shadow.setColor(QColor(0, 0, 0, 60))
-        header.setGraphicsEffect(header_shadow)
+        shadow = QGraphicsDropShadowEffect()
+        shadow.setBlurRadius(18)
+        shadow.setYOffset(4)
+        shadow.setColor(QColor(0, 0, 0, 60))
+        header.setGraphicsEffect(shadow)
 
         header_layout = QHBoxLayout(header)
         header_layout.setContentsMargins(30, 26, 30, 26)
 
         title = QLabel("Add Purchase")
         title.setFont(QFont("Segoe UI", 22, QFont.Bold))
-        title.setMinimumHeight(44)
         title.setStyleSheet("color: #222;")
         header_layout.addWidget(title)
 
@@ -73,8 +67,8 @@ class AddPurchaseWindow(QWidget):
         header_layout.addWidget(self.shop_combo)
 
         add_row_btn = QPushButton("Add Row")
-        add_row_btn.setCursor(Qt.PointingHandCursor)
         add_row_btn.setMinimumHeight(40)
+        add_row_btn.setCursor(Qt.PointingHandCursor)
         add_row_btn.setStyleSheet("""
             QPushButton {
                 background: #4A90E2;
@@ -83,9 +77,7 @@ class AddPurchaseWindow(QWidget):
                 padding: 8px 16px;
                 font-weight: bold;
             }
-            QPushButton:hover {
-                background: #3b7ac7;
-            }
+            QPushButton:hover { background: #3b7ac7; }
         """)
         add_row_btn.clicked.connect(self.add_row)
         header_layout.addWidget(add_row_btn)
@@ -93,13 +85,8 @@ class AddPurchaseWindow(QWidget):
         main.addWidget(header)
 
         table_card = QFrame()
-        table_card.setStyleSheet("""
-            QFrame {
-                background: white;
-                border-radius: 16px;
-            }
-        """)
-        table_card.setGraphicsEffect(header_shadow)
+        table_card.setStyleSheet("QFrame { background: white; border-radius: 16px; }")
+        table_card.setGraphicsEffect(shadow)
 
         table_layout = QVBoxLayout(table_card)
         table_layout.setContentsMargins(20, 20, 20, 20)
@@ -124,17 +111,22 @@ class AddPurchaseWindow(QWidget):
             }
         """)
 
+        header = self.table.horizontalHeader()
+        header.setSectionResizeMode(0, QHeaderView.Fixed)
+        self.table.setColumnWidth(0, 380)
+        header.setSectionResizeMode(1, QHeaderView.ResizeToContents)
+        header.setSectionResizeMode(2, QHeaderView.Fixed)
+        self.table.setColumnWidth(2, 180)
+        header.setSectionResizeMode(3, QHeaderView.ResizeToContents)
+
+        self.table.setColumnWidth(3, 90)
+
         table_layout.addWidget(self.table)
         main.addWidget(table_card, stretch=1)
 
         footer = QFrame()
-        footer.setStyleSheet("""
-            QFrame {
-                background: white;
-                border-radius: 16px;
-            }
-        """)
-        footer.setGraphicsEffect(header_shadow)
+        footer.setStyleSheet("QFrame { background: white; border-radius: 16px; }")
+        footer.setGraphicsEffect(shadow)
 
         footer_layout = QHBoxLayout(footer)
         footer_layout.setContentsMargins(30, 24, 30, 24)
@@ -147,8 +139,8 @@ class AddPurchaseWindow(QWidget):
         footer_layout.addStretch()
 
         save_btn = QPushButton("Save Purchase")
-        save_btn.setCursor(Qt.PointingHandCursor)
         save_btn.setMinimumHeight(46)
+        save_btn.setCursor(Qt.PointingHandCursor)
         save_btn.setStyleSheet("""
             QPushButton {
                 background: #4A90E2;
@@ -157,11 +149,8 @@ class AddPurchaseWindow(QWidget):
                 padding: 10px 24px;
                 font-size: 15px;
                 font-weight: bold;
-                margin-top: 6px;
             }
-            QPushButton:hover {
-                background: #3b7ac7;
-            }
+            QPushButton:hover { background: #3b7ac7; }
         """)
         save_btn.clicked.connect(self.save_purchase)
         footer_layout.addWidget(save_btn)
@@ -183,6 +172,13 @@ class AddPurchaseWindow(QWidget):
         product_combo = QComboBox()
         product_combo.setEditable(True)
         product_combo.setMinimumHeight(36)
+        product_combo.setSizePolicy(
+            product_combo.sizePolicy().Expanding,
+            product_combo.sizePolicy().Fixed
+        )
+        product_combo.setMinimumContentsLength(30)
+        product_combo.setSizeAdjustPolicy(QComboBox.AdjustToContentsOnFirstShow)
+        product_combo.view().setMinimumWidth(500)
 
         for pid, name in self.products:
             product_combo.addItem(name, pid)
@@ -211,9 +207,7 @@ class AddPurchaseWindow(QWidget):
                 border-radius: 6px;
                 font-weight: bold;
             }
-            QPushButton:hover {
-                background: #c53e3e;
-            }
+            QPushButton:hover { background: #c53e3e; }
         """)
         remove_btn.clicked.connect(lambda _, r=row: self.remove_row(r))
         self.table.setCellWidget(row, 3, remove_btn)
@@ -252,7 +246,8 @@ class AddPurchaseWindow(QWidget):
         try:
             self.controller.save_purchase(shop_id)
             QMessageBox.information(self, "Success", "Purchase saved successfully!")
-            self.on_success()
+            if self.on_success:
+                self.on_success()
             self.close()
         except ValueError as e:
             QMessageBox.warning(self, "Error", str(e))

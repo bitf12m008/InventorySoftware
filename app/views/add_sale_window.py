@@ -68,6 +68,7 @@ class AddSaleWindow(QWidget):
                 border: 1px solid #c9c9c9;
                 background: white;
                 font-size: 13px;
+                color: #222;
             }
         """)
         header_layout.addWidget(self.shop_combo)
