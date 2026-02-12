@@ -1,12 +1,12 @@
 import sqlite3
-from app.db.database_init import DB_PATH
+from app.db.database_init import get_connection
 
 class PurchaseModel:
 
     @staticmethod
     def create(product_id, shop_id, qty, price):
         total = qty * price
-        conn = sqlite3.connect(DB_PATH)
+        conn = get_connection()
         cur = conn.cursor()
         cur.execute("""
             INSERT INTO Purchases (product_id, shop_id, quantity, price, total, date)
@@ -18,9 +18,17 @@ class PurchaseModel:
         return purchase_id
 
     @staticmethod
+    def create_with_cursor(cur, product_id, shop_id, qty, price):
+        total = qty * price
+        cur.execute("""
+            INSERT INTO Purchases (product_id, shop_id, quantity, price, total, date)
+            VALUES (?, ?, ?, ?, ?, date('now'))
+        """, (product_id, shop_id, qty, price, total))
+        return cur.lastrowid
+
+    @staticmethod
     def last_price(product_id, shop_id):
-        conn = sqlite3.connect(DB_PATH)
-        conn.row_factory = sqlite3.Row
+        conn = get_connection(sqlite3.Row)
         cur = conn.cursor()
         cur.execute("""
             SELECT price FROM Purchases
@@ -34,8 +42,7 @@ class PurchaseModel:
 
     @staticmethod
     def avg_price(product_id, shop_id):
-        conn = sqlite3.connect(DB_PATH)
-        conn.row_factory = sqlite3.Row
+        conn = get_connection(sqlite3.Row)
         cur = conn.cursor()
         cur.execute("""
             SELECT SUM(quantity * price) AS total_cost,

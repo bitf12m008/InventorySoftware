@@ -1,14 +1,19 @@
 import sqlite3
-from app.db.database_init import DB_PATH
+from app.db.database_init import get_connection
 
 class StockModel:
 
     @staticmethod
     def create(product_id, shop_id, quantity=0):
-        conn = sqlite3.connect(DB_PATH)
+        conn = get_connection()
         c = conn.cursor()
         c.execute(
-            "INSERT INTO Stock (product_id, shop_id, quantity) VALUES (?, ?, ?)",
+            """
+            INSERT INTO Stock (product_id, shop_id, quantity)
+            VALUES (?, ?, ?)
+            ON CONFLICT(product_id, shop_id) DO UPDATE
+            SET quantity = excluded.quantity
+            """,
             (product_id, shop_id, quantity)
         )
         conn.commit()
@@ -16,25 +21,35 @@ class StockModel:
 
     @staticmethod
     def increase(product_id, shop_id, qty):
-        conn = sqlite3.connect(DB_PATH)
+        conn = get_connection()
         c = conn.cursor()
         c.execute(
-            "UPDATE Stock SET quantity = quantity + ? WHERE product_id=? AND shop_id=?",
-            (qty, product_id, shop_id)
+            """
+            INSERT INTO Stock (product_id, shop_id, quantity)
+            VALUES (?, ?, ?)
+            ON CONFLICT(product_id, shop_id) DO UPDATE
+            SET quantity = quantity + excluded.quantity
+            """,
+            (product_id, shop_id, qty)
         )
-
-        if c.rowcount == 0:
-            c.execute(
-                "INSERT INTO Stock (product_id, shop_id, quantity) VALUES (?, ?, ?)",
-                (product_id, shop_id, qty)
-            )
-
         conn.commit()
         conn.close()
 
     @staticmethod
+    def increase_with_cursor(cursor, product_id, shop_id, qty):
+        cursor.execute(
+            """
+            INSERT INTO Stock (product_id, shop_id, quantity)
+            VALUES (?, ?, ?)
+            ON CONFLICT(product_id, shop_id) DO UPDATE
+            SET quantity = quantity + excluded.quantity
+            """,
+            (product_id, shop_id, qty)
+        )
+
+    @staticmethod
     def get_for_product(product_id, shop_id):
-        conn = sqlite3.connect(DB_PATH)
+        conn = get_connection()
         c = conn.cursor()
         c.execute(
             "SELECT quantity FROM Stock WHERE product_id=? AND shop_id=?",
@@ -46,7 +61,7 @@ class StockModel:
 
     @staticmethod
     def reduce(product_id, shop_id, qty):
-        conn = sqlite3.connect(DB_PATH)
+        conn = get_connection()
         c = conn.cursor()
         c.execute(
             "UPDATE Stock SET quantity = quantity - ? WHERE product_id=? AND shop_id=?",
@@ -57,7 +72,7 @@ class StockModel:
 
     @staticmethod
     def get_products_for_shop(shop_id):
-        conn = sqlite3.connect(DB_PATH)
+        conn = get_connection()
         c = conn.cursor()
         c.execute("""
             SELECT p.product_id, p.name, s.quantity
@@ -72,7 +87,7 @@ class StockModel:
     
     @staticmethod
     def get_quantity(product_id, shop_id):
-        conn = sqlite3.connect(DB_PATH)
+        conn = get_connection()
         c = conn.cursor()
         c.execute(
             "SELECT quantity FROM Stock WHERE product_id=? AND shop_id=?",
@@ -84,18 +99,17 @@ class StockModel:
 
     @staticmethod
     def set_quantity(product_id, shop_id, quantity):
-        conn = sqlite3.connect(DB_PATH)
+        conn = get_connection()
         c = conn.cursor()
         c.execute(
-            "UPDATE Stock SET quantity=? WHERE product_id=? AND shop_id=?",
-            (quantity, product_id, shop_id)
+            """
+            INSERT INTO Stock (product_id, shop_id, quantity)
+            VALUES (?, ?, ?)
+            ON CONFLICT(product_id, shop_id) DO UPDATE
+            SET quantity = excluded.quantity
+            """,
+            (product_id, shop_id, quantity)
         )
-
-        if c.rowcount == 0:
-            c.execute(
-                "INSERT INTO Stock (product_id, shop_id, quantity) VALUES (?, ?, ?)",
-                (product_id, shop_id, quantity)
-            )
 
         conn.commit()
         conn.close()

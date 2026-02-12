@@ -1,12 +1,11 @@
 import sqlite3
-from app.db.database_init import DB_PATH
+from app.db.database_init import get_connection
 
 class WeeklyProfitModel:
 
     @staticmethod
     def get_weekly_profit(shop_id, start_date=None, end_date=None):
-        conn = sqlite3.connect(DB_PATH)
-        conn.row_factory = sqlite3.Row
+        conn = get_connection(sqlite3.Row)
         cur = conn.cursor()
 
         query = """
@@ -18,7 +17,8 @@ class WeeklyProfitModel:
                     FROM Purchases p
                     WHERE p.product_id = si.product_id
                       AND p.shop_id = s.shop_id
-                    ORDER BY p.purchase_id DESC
+                      AND date(p.date) <= date(s.date)
+                    ORDER BY date(p.date) DESC, p.purchase_id DESC
                     LIMIT 1
                 )) AS purchase_cost
             FROM Sales s

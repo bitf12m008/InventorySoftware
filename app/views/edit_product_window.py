@@ -132,5 +132,6 @@ class EditProductWindow(QWidget):
 
         ProductModel.update_name(self.product_id, new_name)
         QMessageBox.information(self, "Success", "Product updated successfully.")
-        self.on_success()
+        if self.on_success:
+            self.on_success()
         self.close()

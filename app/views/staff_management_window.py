@@ -123,5 +123,8 @@ class StaffManagementWindow(QWidget):
         )
 
         if ok and pwd:
-            self.controller.reset_password(staff_id, pwd)
-            QMessageBox.information(self, "Success", "Password reset successfully.")
+            try:
+                self.controller.reset_password(staff_id, pwd)
+                QMessageBox.information(self, "Success", "Password reset successfully.")
+            except ValueError as e:
+                QMessageBox.warning(self, "Error", str(e))

@@ -1,11 +1,11 @@
 import sqlite3
-from app.db.database_init import DB_PATH
+from app.db.database_init import get_connection
 
 class ProductModel:
 
     @staticmethod
     def create(name):
-        conn = sqlite3.connect(DB_PATH)
+        conn = get_connection()
         c = conn.cursor()
         c.execute("INSERT INTO Products (name) VALUES (?)", (name,))
         product_id = c.lastrowid
@@ -15,7 +15,7 @@ class ProductModel:
 
     @staticmethod
     def get_all():
-        conn = sqlite3.connect(DB_PATH)
+        conn = get_connection()
         c = conn.cursor()
         c.execute("SELECT product_id, name FROM Products ORDER BY name")
         rows = c.fetchall()
@@ -24,7 +24,7 @@ class ProductModel:
 
     @staticmethod
     def find_by_name(name):
-        conn = sqlite3.connect(DB_PATH)
+        conn = get_connection()
         c = conn.cursor()
         c.execute(
             "SELECT product_id FROM Products WHERE LOWER(name)=?",
@@ -36,8 +36,7 @@ class ProductModel:
     
     @staticmethod
     def get_by_shop(shop_id):
-        conn = sqlite3.connect(DB_PATH)
-        conn.row_factory = sqlite3.Row
+        conn = get_connection(sqlite3.Row)
         cur = conn.cursor()
 
         cur.execute("""
@@ -57,8 +56,7 @@ class ProductModel:
     
     @staticmethod
     def get_by_id(product_id):
-        conn = sqlite3.connect(DB_PATH)
-        conn.row_factory = sqlite3.Row
+        conn = get_connection(sqlite3.Row)
         cur = conn.cursor()
 
         cur.execute(
@@ -71,7 +69,7 @@ class ProductModel:
 
     @staticmethod
     def update_name(product_id, name):
-        conn = sqlite3.connect(DB_PATH)
+        conn = get_connection()
         cur = conn.cursor()
 
         cur.execute(

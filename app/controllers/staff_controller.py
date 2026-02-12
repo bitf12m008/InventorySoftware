@@ -1,5 +1,4 @@
 from app.models.user_model import UserModel
-import hashlib
 
 class StaffController:
     def __init__(self):
@@ -18,7 +17,7 @@ class StaffController:
         if UserModel.exists(username):
             raise ValueError("Username already exists")
 
-        password_hash = hashlib.sha256(password.encode()).hexdigest()
+        password_hash = UserModel.hash_password(password)
 
         UserModel.create(
             username=username,
@@ -30,15 +29,16 @@ class StaffController:
         return self.model.get_all_staff()
 
     def add_staff(self, username, password):
-        hashed = self._hash_password(password)
-        self.model.create_user(username, hashed, role="staff")
+        self.create_staff(username, password)
 
     def deactivate_staff(self, staff_id):
         self.model.deactivate_user(staff_id)
 
     def reset_password(self, staff_id, new_password):
+        if not new_password or len(new_password) < 4:
+            raise ValueError("Password must be at least 4 characters")
         hashed = self._hash_password(new_password)
         self.model.update_password(staff_id, hashed)
 
     def _hash_password(self, password):
-        return hashlib.sha256(password.encode()).hexdigest()
+        return UserModel.hash_password(password)

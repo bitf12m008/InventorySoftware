@@ -1,12 +1,12 @@
 import sqlite3
 from datetime import datetime
-from app.db.database_init import DB_PATH
+from app.db.database_init import get_connection
 
 class SaleModel:
 
     @staticmethod
     def create(shop_id, total, date):
-        conn = sqlite3.connect(DB_PATH)
+        conn = get_connection()
         c = conn.cursor()
         c.execute(
             "INSERT INTO Sales (shop_id, date, grand_total) VALUES (?, ?, ?)",
@@ -19,8 +19,7 @@ class SaleModel:
     
     @staticmethod
     def last_price(product_id, shop_id):
-        conn = sqlite3.connect(DB_PATH)
-        conn.row_factory = sqlite3.Row
+        conn = get_connection(sqlite3.Row)
         cur = conn.cursor()
         cur.execute("""
             SELECT si.price_per_unit
@@ -36,8 +35,7 @@ class SaleModel:
     
     @staticmethod
     def get_sales_by_shop_and_date(shop_id, start_date, end_date):
-        conn = sqlite3.connect(DB_PATH)
-        conn.row_factory = sqlite3.Row
+        conn = get_connection(sqlite3.Row)
         cur = conn.cursor()
 
         cur.execute("""
@@ -63,7 +61,7 @@ class SaleModel:
     
     @staticmethod
     def create_sale(shop_id, date, items):
-        conn = sqlite3.connect(DB_PATH)
+        conn = get_connection()
         cur = conn.cursor()
 
         grand_total = sum(i["subtotal"] for i in items)

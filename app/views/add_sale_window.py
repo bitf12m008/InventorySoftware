@@ -329,7 +329,8 @@ class AddSaleWindow(QWidget):
                 "Success",
                 f"Sale saved successfully!\nInvoice #{sale_id}"
             )
-            self.on_success()
+            if self.on_success:
+                self.on_success()
             self.close()
         except ValueError as e:
             QMessageBox.warning(self, "Error", str(e))

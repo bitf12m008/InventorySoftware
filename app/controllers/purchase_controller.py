@@ -1,7 +1,9 @@
+import sqlite3
 from app.models.shop_model import ShopModel
 from app.models.product_model import ProductModel
 from app.models.stock_model import StockModel
 from app.models.purchase_model import PurchaseModel
+from app.db.database_init import get_connection
 
 class PurchaseController:
 
@@ -43,18 +45,51 @@ class PurchaseController:
         if not self.rows:
             raise ValueError("No purchase rows added.")
 
-        for row in self.rows:
-            name = row["name"]
-            qty = row["qty"]
-            price = row["price"]
+        conn = get_connection()
+        cur = conn.cursor()
 
-            product_id = self.find_product_by_name(name)
-            if not product_id:
-                product_id = ProductModel.create(name)
-                StockModel.create(product_id, shop_id, 0)
+        try:
+            for row in self.rows:
+                name = row["name"].strip()
+                qty = int(row["qty"])
+                price = float(row["price"])
 
-            PurchaseModel.create(product_id, shop_id, qty, price)
+                if not name:
+                    raise ValueError("Product name is required.")
+                if qty <= 0:
+                    raise ValueError("Quantity must be greater than 0.")
+                if price < 0:
+                    raise ValueError("Price cannot be negative.")
 
-            StockModel.increase(product_id, shop_id, qty)
+                cur.execute(
+                    "SELECT product_id FROM Products WHERE LOWER(name) = ?",
+                    (name.lower(),)
+                )
+                existing = cur.fetchone()
+                if existing:
+                    product_id = existing[0]
+                else:
+                    cur.execute(
+                        "INSERT INTO Products (name) VALUES (?)",
+                        (name,)
+                    )
+                    product_id = cur.lastrowid
+
+                PurchaseModel.create_with_cursor(
+                    cur, product_id, shop_id, qty, price
+                )
+                StockModel.increase_with_cursor(
+                    cur, product_id, shop_id, qty
+                )
+
+            conn.commit()
+        except (ValueError, sqlite3.IntegrityError):
+            conn.rollback()
+            raise
+        except Exception:
+            conn.rollback()
+            raise
+        finally:
+            conn.close()
 
         return True

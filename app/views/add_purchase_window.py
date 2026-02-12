@@ -209,12 +209,20 @@ class AddPurchaseWindow(QWidget):
             }
             QPushButton:hover { background: #c53e3e; }
         """)
-        remove_btn.clicked.connect(lambda _, r=row: self.remove_row(r))
+        remove_btn.clicked.connect(
+            lambda _, btn=remove_btn: self.remove_row_by_button(btn)
+        )
         self.table.setCellWidget(row, 3, remove_btn)
 
     def remove_row(self, row):
         self.table.removeRow(row)
         self.recalculate()
+
+    def remove_row_by_button(self, button):
+        for row in range(self.table.rowCount()):
+            if self.table.cellWidget(row, 3) is button:
+                self.remove_row(row)
+                return
 
     def recalculate(self):
         rows = []
@@ -224,7 +232,10 @@ class AddPurchaseWindow(QWidget):
             product_combo = self.table.cellWidget(r, 0)
             qty = self.table.cellWidget(r, 1).value()
             price_text = self.table.cellWidget(r, 2).text().strip()
-            price = float(price_text) if price_text else 0
+            try:
+                price = float(price_text) if price_text else 0
+            except ValueError:
+                price = 0
 
             total += qty * price
             rows.append({
@@ -241,6 +252,21 @@ class AddPurchaseWindow(QWidget):
             QMessageBox.warning(self, "Error", "Add at least one product row.")
             return
 
+        for r in range(self.table.rowCount()):
+            price_text = self.table.cellWidget(r, 2).text().strip()
+            if not price_text:
+                QMessageBox.warning(self, "Error", f"Row {r + 1}: price is required.")
+                return
+            try:
+                price = float(price_text)
+            except ValueError:
+                QMessageBox.warning(self, "Error", f"Row {r + 1}: price must be numeric.")
+                return
+            if price < 0:
+                QMessageBox.warning(self, "Error", f"Row {r + 1}: price cannot be negative.")
+                return
+
+        self.recalculate()
         shop_id = self.shop_combo.currentData()
 
         try:

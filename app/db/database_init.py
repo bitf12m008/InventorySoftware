@@ -2,6 +2,7 @@ import sqlite3
 import os
 import sys
 import hashlib
+import secrets
 
 # EXE-safe base path
 def get_base_path():
@@ -12,9 +13,30 @@ def get_base_path():
 DB_DIR = os.path.join(get_base_path(), "database")
 DB_PATH = os.path.join(DB_DIR, "app.db")
 
+PBKDF2_ITERATIONS = 200_000
+
+
+def hash_password(password: str) -> str:
+    salt = secrets.token_hex(16)
+    dk = hashlib.pbkdf2_hmac(
+        "sha256",
+        password.encode("utf-8"),
+        salt.encode("utf-8"),
+        PBKDF2_ITERATIONS
+    )
+    return f"pbkdf2_sha256${PBKDF2_ITERATIONS}${salt}${dk.hex()}"
+
+
+def get_connection(row_factory=None):
+    conn = sqlite3.connect(DB_PATH)
+    conn.execute("PRAGMA foreign_keys = ON")
+    if row_factory is not None:
+        conn.row_factory = row_factory
+    return conn
+
 def initialize_database():
     os.makedirs(DB_DIR, exist_ok=True)
-    conn = sqlite3.connect(DB_PATH)
+    conn = get_connection()
     cursor = conn.cursor()
 
     # Shops
@@ -54,6 +76,10 @@ def initialize_database():
         FOREIGN KEY(product_id) REFERENCES Products(product_id),
         FOREIGN KEY(shop_id) REFERENCES Shops(shop_id)
     )
+    """)
+    cursor.execute("""
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_stock_product_shop
+    ON Stock(product_id, shop_id)
     """)
 
     # Sales (invoice header)
@@ -112,11 +138,13 @@ def initialize_database():
     # default admin
     cursor.execute("SELECT * FROM Users WHERE username='admin'")
     if cursor.fetchone() is None:
-        password = "admin123"
-        password_hash = hashlib.sha256(password.encode()).hexdigest()
+        password = os.getenv("KFC_DEFAULT_ADMIN_PASSWORD") or secrets.token_urlsafe(12)
+        password_hash = hash_password(password)
         cursor.execute("INSERT INTO Users (username, password_hash, role) VALUES (?, ?, ?)",
                        ("admin", password_hash, "admin"))
         conn.commit()
+        if os.getenv("KFC_DEFAULT_ADMIN_PASSWORD") is None:
+            print(f"Created default admin with generated password: {password}")
 
     # default shops
     cursor.execute("SELECT COUNT(*) FROM Shops")

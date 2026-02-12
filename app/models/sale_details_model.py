@@ -1,13 +1,12 @@
 import sqlite3
 from datetime import datetime
-from app.db.database_init import DB_PATH
+from app.db.database_init import get_connection
 
 class SaleDetailsModel:
 
     @staticmethod
     def get_sale_header(sale_id):
-        conn = sqlite3.connect(DB_PATH)
-        conn.row_factory = sqlite3.Row
+        conn = get_connection(sqlite3.Row)
         cur = conn.cursor()
 
         cur.execute("""
@@ -33,8 +32,7 @@ class SaleDetailsModel:
 
     @staticmethod
     def get_sale_items(sale_id):
-        conn = sqlite3.connect(DB_PATH)
-        conn.row_factory = sqlite3.Row
+        conn = get_connection(sqlite3.Row)
         cur = conn.cursor()
 
         cur.execute("""

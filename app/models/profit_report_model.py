@@ -1,22 +1,29 @@
 import sqlite3
-from app.db.database_init import DB_PATH
+from app.db.database_init import get_connection
 
 class ProfitReportModel:
 
     @staticmethod
     def get_profit_report(shop_id, start_date, end_date):
-        conn = sqlite3.connect(DB_PATH)
-        conn.row_factory = sqlite3.Row
+        conn = get_connection(sqlite3.Row)
         cur = conn.cursor()
 
-        # Fetch sales
         cur.execute("""
             SELECT 
                 si.product_id,
                 p.name AS product_name,
                 si.quantity,
                 si.price_per_unit,
-                si.line_total
+                si.line_total,
+                COALESCE((
+                    SELECT pr.price
+                    FROM Purchases pr
+                    WHERE pr.product_id = si.product_id
+                      AND pr.shop_id = s.shop_id
+                      AND date(pr.date) <= date(s.date)
+                    ORDER BY date(pr.date) DESC, pr.purchase_id DESC
+                    LIMIT 1
+                ), 0) AS purchase_price
             FROM SaleItems si
             JOIN Sales s ON s.sale_id = si.sale_id
             JOIN Products p ON p.product_id = si.product_id
@@ -38,16 +45,7 @@ class ProfitReportModel:
             qty = row["quantity"]
             sale_price = row["price_per_unit"]
             sale_total = row["line_total"]
-
-            # last purchase price
-            cur.execute("""
-                SELECT price FROM Purchases
-                WHERE product_id=? AND shop_id=?
-                ORDER BY purchase_id DESC
-                LIMIT 1
-            """, (pid, shop_id))
-            purchase_row = cur.fetchone()
-            purchase_price = purchase_row["price"] if purchase_row else 0
+            purchase_price = row["purchase_price"]
 
             profit_per_unit = sale_price - purchase_price
             total_profit = profit_per_unit * qty

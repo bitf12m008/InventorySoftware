@@ -163,5 +163,6 @@ class AddProductWindow(QWidget):
         self.controller.create_product(name, selected_shop_ids)
 
         QMessageBox.information(self, "Success", "Product added successfully.")
-        self.on_success()
+        if self.on_success:
+            self.on_success()
         self.close()
