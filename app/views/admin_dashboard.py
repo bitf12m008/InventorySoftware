@@ -18,6 +18,7 @@ from app.views.show_sales_window import ShowSalesWindow
 from app.views.profit_report_window import ProfitReportWindow
 from app.views.weekly_profit_window import WeeklyProfitWindow
 from app.views.staff_management_window import StaffManagementWindow
+from app.views.audit_log_window import AuditLogWindow
 from app.controllers.backup_controller import BackupController
 
 class AdminDashboard(QWidget):
@@ -193,6 +194,7 @@ class AdminDashboard(QWidget):
 
         if self.user_info.get("role") == "admin":
            btn_row.addWidget(self.action_button("Staff Management", QStyle.SP_ArrowDown, self.open_staff_management))
+           btn_row.addWidget(self.action_button("Audit Logs", QStyle.SP_FileDialogDetailedView, self.open_audit_logs))
 
         btn_row.addStretch()
         main_layout.addLayout(btn_row)
@@ -338,15 +340,25 @@ class AdminDashboard(QWidget):
         pid = int(self.table.item(sel, 0).text())
         shop_id = self.shop_combo.currentData()
         name = self.table.item(sel, 1).text()
-        self.adjust_stock_window = AdjustStockWindow(pid, shop_id, name, on_success=self.reload_current_shop)
+        self.adjust_stock_window = AdjustStockWindow(
+            pid, shop_id, name,
+            on_success=self.reload_current_shop,
+            actor=self.user_info
+        )
         self.adjust_stock_window.show()
 
     def add_purchase(self):
-        self.add_purchase_window = AddPurchaseWindow(on_success=self.reload_current_shop)
+        self.add_purchase_window = AddPurchaseWindow(
+            on_success=self.reload_current_shop,
+            actor=self.user_info
+        )
         self.add_purchase_window.show()
 
     def add_sale(self):
-        self.add_sale_window = AddSaleWindow(on_success=self.reload_current_shop)
+        self.add_sale_window = AddSaleWindow(
+            on_success=self.reload_current_shop,
+            actor=self.user_info
+        )
         self.add_sale_window.show()
 
     def open_show_sales(self):
@@ -362,8 +374,12 @@ class AdminDashboard(QWidget):
         self.weekly_profit_window.show()
 
     def open_staff_management(self):
-        self.staff_mgmt = StaffManagementWindow()
+        self.staff_mgmt = StaffManagementWindow(actor=self.user_info)
         self.staff_mgmt.show()
+
+    def open_audit_logs(self):
+        self.audit_window = AuditLogWindow()
+        self.audit_window.show()
 
     def backup_db(self):
         try:

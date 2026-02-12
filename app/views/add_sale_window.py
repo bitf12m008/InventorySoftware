@@ -9,10 +9,10 @@ from PyQt5.QtGui import QFont, QColor
 from app.controllers.sale_controller import SaleController
 
 class AddSaleWindow(QWidget):
-    def __init__(self, parent=None, on_success=None):
+    def __init__(self, parent=None, on_success=None, actor=None):
         super().__init__(parent)
 
-        self.controller = SaleController()
+        self.controller = SaleController(actor=actor)
         self.on_success=on_success
 
         self.setWindowTitle("Add Sale (Invoice)")

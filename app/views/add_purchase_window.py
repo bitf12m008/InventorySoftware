@@ -9,10 +9,10 @@ from PyQt5.QtGui import QFont, QColor
 from app.controllers.purchase_controller import PurchaseController
 
 class AddPurchaseWindow(QWidget):
-    def __init__(self, on_success=None):
+    def __init__(self, on_success=None, actor=None):
         super().__init__()
 
-        self.controller = PurchaseController()
+        self.controller = PurchaseController(actor=actor)
         self.on_success = on_success
 
         self.setWindowTitle("Add Purchase")

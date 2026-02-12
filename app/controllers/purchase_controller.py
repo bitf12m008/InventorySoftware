@@ -3,12 +3,14 @@ from app.models.shop_model import ShopModel
 from app.models.product_model import ProductModel
 from app.models.stock_model import StockModel
 from app.models.purchase_model import PurchaseModel
+from app.models.audit_log_model import AuditLogModel
 from app.db.database_init import get_connection
 
 class PurchaseController:
 
-    def __init__(self):
+    def __init__(self, actor=None):
         self.rows = []
+        self.actor = actor or {}
 
     def get_shops(self):
         return ShopModel.get_all()
@@ -75,11 +77,38 @@ class PurchaseController:
                     )
                     product_id = cur.lastrowid
 
-                PurchaseModel.create_with_cursor(
+                cur.execute(
+                    """
+                    SELECT quantity
+                    FROM Stock
+                    WHERE product_id = ? AND shop_id = ?
+                    """,
+                    (product_id, shop_id)
+                )
+                stock_row = cur.fetchone()
+                old_stock = stock_row[0] if stock_row else 0
+
+                purchase_id = PurchaseModel.create_with_cursor(
                     cur, product_id, shop_id, qty, price
                 )
                 StockModel.increase_with_cursor(
                     cur, product_id, shop_id, qty
+                )
+                new_stock = old_stock + qty
+
+                AuditLogModel.create_with_cursor(
+                    cursor=cur,
+                    action="PURCHASE_ADD",
+                    entity_type="Purchase",
+                    entity_id=purchase_id,
+                    shop_id=shop_id,
+                    product_id=product_id,
+                    user_id=self.actor.get("user_id"),
+                    username=self.actor.get("username"),
+                    details=(
+                        f"{name}: qty={qty}, unit_price={price:.2f}, "
+                        f"stock {old_stock} -> {new_stock}"
+                    ),
                 )
 
             conn.commit()

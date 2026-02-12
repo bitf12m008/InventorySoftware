@@ -1,6 +1,7 @@
 import sqlite3
 from datetime import datetime
 from app.db.database_init import get_connection
+from app.models.audit_log_model import AuditLogModel
 
 class SaleModel:
 
@@ -60,9 +61,10 @@ class SaleModel:
         return formatted
     
     @staticmethod
-    def create_sale(shop_id, date, items):
+    def create_sale(shop_id, date, items, actor=None):
         conn = get_connection()
         cur = conn.cursor()
+        actor = actor or {}
 
         grand_total = sum(i["subtotal"] for i in items)
 
@@ -73,6 +75,17 @@ class SaleModel:
         sale_id = cur.lastrowid
 
         for item in items:
+            cur.execute(
+                """
+                SELECT quantity
+                FROM Stock
+                WHERE product_id = ? AND shop_id = ?
+                """,
+                (item["product_id"], shop_id)
+            )
+            stock_row = cur.fetchone()
+            old_stock = stock_row[0] if stock_row else 0
+
             cur.execute("""
                 INSERT INTO SaleItems
                 (sale_id, product_id, quantity, price_per_unit, line_total)
@@ -90,6 +103,22 @@ class SaleModel:
                 SET quantity = quantity - ?
                 WHERE product_id = ? AND shop_id = ?
             """, (item["qty"], item["product_id"], shop_id))
+
+            new_stock = old_stock - item["qty"]
+            AuditLogModel.create_with_cursor(
+                cursor=cur,
+                action="SALE_ADD",
+                entity_type="Sale",
+                entity_id=sale_id,
+                shop_id=shop_id,
+                product_id=item["product_id"],
+                user_id=actor.get("user_id"),
+                username=actor.get("username"),
+                details=(
+                    f"{item['name']}: qty={item['qty']}, sale_price={item['price']:.2f}, "
+                    f"stock {old_stock} -> {new_stock}"
+                ),
+            )
 
         conn.commit()
         conn.close()

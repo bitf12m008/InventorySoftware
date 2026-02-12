@@ -87,8 +87,10 @@ class UserModel:
             VALUES (?, ?, ?, 'active')
         """, (username, password_hash, role))
 
+        user_id = cur.lastrowid
         conn.commit()
         conn.close()
+        return user_id
 
     @staticmethod
     def exists(username):
@@ -156,3 +158,15 @@ class UserModel:
 
         conn.commit()
         conn.close()
+
+    @staticmethod
+    def get_by_id(user_id):
+        conn = get_connection(sqlite3.Row)
+        cur = conn.cursor()
+        cur.execute(
+            "SELECT user_id, username, role, status FROM Users WHERE user_id = ?",
+            (user_id,)
+        )
+        row = cur.fetchone()
+        conn.close()
+        return row

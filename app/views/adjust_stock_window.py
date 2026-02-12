@@ -7,14 +7,17 @@ from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont, QColor
 
 from app.models.stock_model import StockModel
+from app.models.audit_log_model import AuditLogModel
 
 class AdjustStockWindow(QWidget):
-    def __init__(self, product_id, shop_id, product_name, on_success=None):
+    def __init__(self, product_id, shop_id, product_name, on_success=None, actor=None):
         super().__init__()
 
         self.product_id = product_id
         self.shop_id = shop_id
         self.on_success = on_success
+        self.actor = actor or {}
+        self.product_name = product_name
 
         self.setWindowTitle(f"Adjust Stock – {product_name}")
         self.setFixedSize(460, 320)
@@ -158,8 +161,18 @@ class AdjustStockWindow(QWidget):
         main.addWidget(card)
 
     def save(self):
+        old_qty = StockModel.get_quantity(self.product_id, self.shop_id)
         new_qty = self.qty_spin.value()
         StockModel.set_quantity(self.product_id, self.shop_id, new_qty)
+        AuditLogModel.log(
+            action="STOCK_ADJUST",
+            entity_type="Stock",
+            shop_id=self.shop_id,
+            product_id=self.product_id,
+            user_id=self.actor.get("user_id"),
+            username=self.actor.get("username"),
+            details=f"{self.product_name}: {old_qty} -> {new_qty}",
+        )
 
         QMessageBox.information(self, "Saved", "Stock updated successfully.")
 

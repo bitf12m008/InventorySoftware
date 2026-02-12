@@ -10,9 +10,10 @@ from app.views.add_staff_window import AddStaffWindow
 from PyQt5.QtWidgets import QLineEdit
 
 class StaffManagementWindow(QWidget):
-    def __init__(self):
+    def __init__(self, actor=None):
         super().__init__()
-        self.controller = StaffController()
+        self.actor = actor or {}
+        self.controller = StaffController(actor=self.actor)
         self.setWindowTitle("Staff Management")
         self.resize(700, 450)
         self.setStyleSheet("background:#eef1f6;")
@@ -84,7 +85,7 @@ class StaffManagementWindow(QWidget):
             self.table.setItem(r, 3, status_item)
 
     def open_add_staff(self):
-        self.add_window = AddStaffWindow(on_success=self.load_staff)
+        self.add_window = AddStaffWindow(on_success=self.load_staff, actor=self.actor)
         self.add_window.show()
 
     def delete_staff(self):

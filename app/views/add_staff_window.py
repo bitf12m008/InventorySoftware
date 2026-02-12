@@ -8,10 +8,11 @@ from PyQt5.QtGui import QFont, QColor
 from app.controllers.staff_controller import StaffController
 
 class AddStaffWindow(QWidget):
-    def __init__(self, on_success=None):
+    def __init__(self, on_success=None, actor=None):
         super().__init__()
 
         self.on_success = on_success
+        self.controller = StaffController(actor=actor)
 
         self.setWindowTitle("Add Staff Account")
         self.setFixedSize(460, 350)
@@ -133,7 +134,7 @@ class AddStaffWindow(QWidget):
         password = self.password_input.text().strip()
 
         try:
-            StaffController.create_staff(username, password)
+            self.controller.create_staff(username, password)
 
             QMessageBox.information(
                 self,

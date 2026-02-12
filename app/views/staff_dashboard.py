@@ -196,7 +196,10 @@ class StaffDashboard(QWidget):
 
 
     def add_sale(self):
-        self.sale_window = AddSaleWindow(on_success=self.reload_current_shop)
+        self.sale_window = AddSaleWindow(
+            on_success=self.reload_current_shop,
+            actor=self.user_info
+        )
         self.sale_window.show()
 
     def open_show_sales(self):

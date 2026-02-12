@@ -133,6 +133,31 @@ def initialize_database():
     )
     """)
 
+    # Audit logs
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS AuditLogs (
+        audit_id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER,
+        username TEXT,
+        action TEXT NOT NULL,
+        entity_type TEXT NOT NULL,
+        entity_id INTEGER,
+        shop_id INTEGER,
+        product_id INTEGER,
+        details TEXT,
+        created_at TEXT NOT NULL,
+        FOREIGN KEY(user_id) REFERENCES Users(user_id)
+    )
+    """)
+    cursor.execute("""
+    CREATE INDEX IF NOT EXISTS idx_auditlogs_created_at
+    ON AuditLogs(created_at DESC)
+    """)
+    cursor.execute("""
+    CREATE INDEX IF NOT EXISTS idx_auditlogs_action
+    ON AuditLogs(action)
+    """)
+
     conn.commit()
 
     # default admin

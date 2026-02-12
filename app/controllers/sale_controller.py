@@ -6,8 +6,9 @@ from datetime import datetime
 
 
 class SaleController:
-    def __init__(self):
+    def __init__(self, actor=None):
         self.cart = []
+        self.actor = actor or {}
 
     def get_shops(self):
         return ShopModel.get_all()
@@ -65,7 +66,8 @@ class SaleController:
         sale_id = SaleModel.create_sale(
             shop_id=shop_id,
             date=datetime.now().isoformat(),
-            items=self.cart
+            items=self.cart,
+            actor=self.actor,
         )
 
         self.clear_cart()
