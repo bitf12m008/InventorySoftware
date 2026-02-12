@@ -239,8 +239,20 @@ class WeeklyProfitWindow(QWidget):
                 border: 1px solid #c9c9c9;
                 background: white;
                 font-size: 13px;
+                color: #222;
             }
             QComboBox:focus, QDateEdit:focus {
                 border: 1.5px solid #4A90E2;
+            }
+            QComboBox QAbstractItemView {
+                background: white;
+                color: #222;
+                selection-background-color: #808080;
+                selection-color: #ffffff;
+                outline: 0;
+            }
+            QComboBox QAbstractItemView::item:selected {
+                background: #808080;
+                color: #ffffff;
             }
         """

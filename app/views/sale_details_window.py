@@ -5,8 +5,8 @@ from PyQt5.QtWidgets import (
     QTableWidget, QTableWidgetItem, QMessageBox, QFileDialog,
     QFrame, QGraphicsDropShadowEffect, QHeaderView
 )
-from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QFont, QColor, QTextDocument
+from PyQt5.QtCore import Qt, QRect
+from PyQt5.QtGui import QFont, QColor, QPainter, QPen
 from PyQt5.QtPrintSupport import QPrinter, QPrintDialog
 
 from app.models.sale_details_model import SaleDetailsModel
@@ -192,62 +192,96 @@ class SaleDetailsWindow(QWidget):
             }}
         """
 
-    def _build_receipt_html(self):
-        if not self.sale_header:
-            return ""
-
-        rows = []
-        for item in self.sale_items:
-            rows.append(
-                f"""
-                <tr>
-                    <td>{item['product_name']}</td>
-                    <td style="text-align:right;">{item['quantity']}</td>
-                    <td style="text-align:right;">{item['price_per_unit']:.2f}</td>
-                    <td style="text-align:right;">{item['line_total']:.2f}</td>
-                </tr>
-                """
-            )
-
-        rows_html = "\n".join(rows)
+    def _draw_receipt(self, painter, page_rect):
         header = self.sale_header
-        return f"""
-            <html>
-            <head>
-                <style>
-                    body {{ font-family: Arial, sans-serif; font-size: 12px; color: #111; }}
-                    h1 {{ font-size: 20px; margin: 0 0 4px 0; }}
-                    .meta {{ margin: 0 0 14px 0; color: #444; }}
-                    table {{ width: 100%; border-collapse: collapse; margin-top: 8px; }}
-                    th, td {{ border-bottom: 1px solid #ddd; padding: 8px 6px; }}
-                    th {{ text-align: left; background: #f5f5f5; }}
-                    .total {{ margin-top: 16px; text-align: right; font-size: 15px; font-weight: bold; }}
-                </style>
-            </head>
-            <body>
-                <h1>KFC Inventory Receipt</h1>
-                <div class="meta">
-                    Invoice: #{header['sale_id']}<br/>
-                    Shop: {header['shop_name']}<br/>
-                    Date: {header['date']}
-                </div>
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Product</th>
-                            <th style="text-align:right;">Qty</th>
-                            <th style="text-align:right;">Unit Price</th>
-                            <th style="text-align:right;">Line Total</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {rows_html}
-                    </tbody>
-                </table>
-                <div class="total">Grand Total: {header['grand_total']:.2f}</div>
-            </body>
-            </html>
-        """
+        if not header:
+            return
+
+        painter.setPen(QPen(Qt.black, 1))
+        left = page_rect.left() + 36
+        right = page_rect.right() - 36
+        width = right - left
+        y = page_rect.top() + 36
+
+        # Title
+        painter.setFont(QFont("Arial", 16, QFont.Bold))
+        title_h = painter.fontMetrics().height()
+        painter.drawText(left, y + title_h, "KFC Inventory Receipt")
+        y += title_h + 12
+
+        # Meta
+        painter.setFont(QFont("Arial", 10))
+        meta_h = painter.fontMetrics().height()
+        painter.drawText(left, y + meta_h, f"Invoice: #{header['sale_id']}")
+        y += meta_h + 6
+        painter.drawText(left, y + meta_h, f"Shop: {header['shop_name']}")
+        y += meta_h + 6
+        painter.drawText(left, y + meta_h, f"Date: {header['date']}")
+        y += meta_h + 14
+
+        # Table layout
+        col_product = int(width * 0.52)
+        col_qty = int(width * 0.12)
+        col_price = int(width * 0.18)
+        col_total = width - col_product - col_qty - col_price
+        x_product = left
+        x_qty = x_product + col_product
+        x_price = x_qty + col_qty
+        x_total = x_price + col_price
+
+        # Header row
+        painter.setFont(QFont("Arial", 10, QFont.Bold))
+        header_row_h = painter.fontMetrics().height() + 12
+        header_rect = QRect(left, y, width, header_row_h)
+        product_head_rect = QRect(x_product, y, col_product, header_row_h)
+        qty_head_rect = QRect(x_qty, y, col_qty, header_row_h)
+        price_head_rect = QRect(x_price, y, col_price, header_row_h)
+        total_head_rect = QRect(x_total, y, col_total, header_row_h)
+
+        painter.drawRect(left, y, width, header_row_h)
+        painter.drawLine(x_qty, y, x_qty, y + header_row_h)
+        painter.drawLine(x_price, y, x_price, y + header_row_h)
+        painter.drawLine(x_total, y, x_total, y + header_row_h)
+        painter.drawText(product_head_rect.adjusted(6, 0, -6, 0), Qt.AlignVCenter | Qt.AlignLeft, "Product")
+        painter.drawText(qty_head_rect.adjusted(6, 0, -6, 0), Qt.AlignVCenter | Qt.AlignRight, "Qty")
+        painter.drawText(price_head_rect.adjusted(6, 0, -6, 0), Qt.AlignVCenter | Qt.AlignRight, "Unit Price")
+        painter.drawText(total_head_rect.adjusted(6, 0, -6, 0), Qt.AlignVCenter | Qt.AlignRight, "Line Total")
+        y += header_row_h
+
+        # Data rows
+        painter.setFont(QFont("Arial", 10))
+        row_h = painter.fontMetrics().height() + 12
+        for item in self.sale_items:
+            if y + row_h > page_rect.bottom() - 70:
+                # Basic page break for very long receipts
+                printer = painter.device()
+                if hasattr(printer, "newPage"):
+                    printer.newPage()
+                y = page_rect.top() + 36
+            painter.drawRect(left, y, width, row_h)
+            painter.drawLine(x_qty, y, x_qty, y + row_h)
+            painter.drawLine(x_price, y, x_price, y + row_h)
+            painter.drawLine(x_total, y, x_total, y + row_h)
+            product_rect = QRect(x_product, y, col_product, row_h)
+            qty_rect = QRect(x_qty, y, col_qty, row_h)
+            price_rect = QRect(x_price, y, col_price, row_h)
+            total_rect = QRect(x_total, y, col_total, row_h)
+
+            painter.drawText(product_rect.adjusted(6, 0, -6, 0), Qt.AlignVCenter | Qt.AlignLeft, str(item["product_name"]))
+            painter.drawText(qty_rect.adjusted(6, 0, -6, 0), Qt.AlignVCenter | Qt.AlignRight, str(item["quantity"]))
+            painter.drawText(price_rect.adjusted(6, 0, -6, 0), Qt.AlignVCenter | Qt.AlignRight, f"{item['price_per_unit']:.2f}")
+            painter.drawText(total_rect.adjusted(6, 0, -6, 0), Qt.AlignVCenter | Qt.AlignRight, f"{item['line_total']:.2f}")
+            y += row_h
+
+        y += 20
+        painter.setFont(QFont("Arial", 11, QFont.Bold))
+        total_h = painter.fontMetrics().height()
+        total_rect = QRect(left, y, width, total_h + 8)
+        painter.drawText(
+            total_rect.adjusted(0, 0, -6, 0),
+            Qt.AlignVCenter | Qt.AlignRight,
+            f"Grand Total: {header['grand_total']:.2f}"
+        )
 
     def export_receipt_pdf(self):
         if not self.sale_header:
@@ -266,15 +300,19 @@ class SaleDetailsWindow(QWidget):
         if not path.lower().endswith(".pdf"):
             path = f"{path}.pdf"
 
-        doc = QTextDocument()
-        doc.setHtml(self._build_receipt_html())
-
         printer = QPrinter(QPrinter.HighResolution)
+        printer.setPaperSize(QPrinter.A4)
+        printer.setPageMargins(12, 12, 12, 12, QPrinter.Millimeter)
+        printer.setColorMode(QPrinter.Color)
         printer.setOutputFormat(QPrinter.PdfFormat)
         printer.setOutputFileName(path)
 
         try:
-            doc.print_(printer)
+            painter = QPainter()
+            if not painter.begin(printer):
+                raise RuntimeError("Failed to initialize PDF writer")
+            self._draw_receipt(painter, printer.pageRect())
+            painter.end()
             ReceiptModel.create(self.sale_id, path)
             QMessageBox.information(self, "Export Complete", f"Receipt saved to:\n{path}")
         except Exception as e:
@@ -286,14 +324,19 @@ class SaleDetailsWindow(QWidget):
             return
 
         printer = QPrinter(QPrinter.HighResolution)
+        printer.setPaperSize(QPrinter.A4)
+        printer.setPageMargins(12, 12, 12, 12, QPrinter.Millimeter)
+        printer.setColorMode(QPrinter.Color)
         dialog = QPrintDialog(printer, self)
         if dialog.exec_() != QPrintDialog.Accepted:
             return
 
-        doc = QTextDocument()
-        doc.setHtml(self._build_receipt_html())
         try:
-            doc.print_(printer)
+            painter = QPainter()
+            if not painter.begin(printer):
+                raise RuntimeError("Failed to initialize printer")
+            self._draw_receipt(painter, printer.pageRect())
+            painter.end()
             QMessageBox.information(self, "Printed", "Receipt sent to printer.")
         except Exception as e:
             QMessageBox.critical(self, "Print Failed", str(e))

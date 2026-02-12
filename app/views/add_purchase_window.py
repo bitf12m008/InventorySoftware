@@ -62,6 +62,18 @@ class AddPurchaseWindow(QWidget):
                 border: 1px solid #c9c9c9;
                 background: white;
                 font-size: 13px;
+                color: #222;
+            }
+            QComboBox QAbstractItemView {
+                background: white;
+                color: #222;
+                selection-background-color: #808080;
+                selection-color: #ffffff;
+                outline: 0;
+            }
+            QComboBox QAbstractItemView::item:selected {
+                background: #808080;
+                color: #ffffff;
             }
         """)
         header_layout.addWidget(self.shop_combo)
@@ -179,6 +191,22 @@ class AddPurchaseWindow(QWidget):
         product_combo.setMinimumContentsLength(30)
         product_combo.setSizeAdjustPolicy(QComboBox.AdjustToContentsOnFirstShow)
         product_combo.view().setMinimumWidth(500)
+        product_combo.setStyleSheet("""
+            QComboBox {
+                padding: 5px 8px;
+                border-radius: 6px;
+                border: 1px solid #c9c9c9;
+                background: white;
+                color: #222;
+            }
+            QComboBox QAbstractItemView {
+                background: white;
+                color: #222;
+                selection-background-color: #808080;
+                selection-color: #ffffff;
+                outline: 0;
+            }
+        """)
 
         for pid, name in self.products:
             product_combo.addItem(name, pid)

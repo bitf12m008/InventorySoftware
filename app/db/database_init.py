@@ -163,13 +163,11 @@ def initialize_database():
     # default admin
     cursor.execute("SELECT * FROM Users WHERE username='admin'")
     if cursor.fetchone() is None:
-        password = os.getenv("KFC_DEFAULT_ADMIN_PASSWORD") or secrets.token_urlsafe(12)
+        password = "admin123"
         password_hash = hash_password(password)
         cursor.execute("INSERT INTO Users (username, password_hash, role) VALUES (?, ?, ?)",
                        ("admin", password_hash, "admin"))
         conn.commit()
-        if os.getenv("KFC_DEFAULT_ADMIN_PASSWORD") is None:
-            print(f"Created default admin with generated password: {password}")
 
     # default shops
     cursor.execute("SELECT COUNT(*) FROM Shops")

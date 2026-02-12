@@ -79,6 +79,13 @@ class AdminDashboard(QWidget):
                 font-size: 13px;
                 color: #222;
             }
+            QComboBox QAbstractItemView {
+                background: white;
+                color: #222;
+                selection-background-color: #808080;
+                selection-color: #ffffff;
+                outline: 0;
+            }
         """)
         header_layout.addWidget(self.shop_combo)
 

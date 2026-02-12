@@ -69,6 +69,13 @@ class StaffDashboard(QWidget):
                 background: white;
                 font-size: 13px;
             }
+            QComboBox QAbstractItemView {
+                background: white;
+                color: #222;
+                selection-background-color: #808080;
+                selection-color: #ffffff;
+                outline: 0;
+            }
         """)
         header_layout.addWidget(self.shop_combo)
 

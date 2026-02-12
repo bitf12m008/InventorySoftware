@@ -70,6 +70,13 @@ class AddSaleWindow(QWidget):
                 font-size: 13px;
                 color: #222;
             }
+            QComboBox QAbstractItemView {
+                background: white;
+                color: #222;
+                selection-background-color: #808080;
+                selection-color: #ffffff;
+                outline: 0;
+            }
         """)
         header_layout.addWidget(self.shop_combo)
 
@@ -92,6 +99,26 @@ class AddSaleWindow(QWidget):
 
         self.product_combo = QComboBox()
         self.product_combo.setMinimumHeight(38)
+        self.product_combo.setStyleSheet("""
+            QComboBox {
+                padding: 6px 10px;
+                border-radius: 8px;
+                border: 1px solid #c9c9c9;
+                background: white;
+                color: #222;
+                font-size: 13px;
+            }
+            QComboBox:focus {
+                border: 1.4px solid #4A90E2;
+            }
+            QComboBox QAbstractItemView {
+                background: white;
+                color: #222;
+                selection-background-color: #808080;
+                selection-color: #ffffff;
+                outline: 0;
+            }
+        """)
         entry_layout.addWidget(self.product_combo, stretch=2)
 
         self.price_input = QLineEdit()

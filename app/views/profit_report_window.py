@@ -259,4 +259,11 @@ class ProfitReportWindow(QWidget):
             QComboBox:focus, QDateEdit:focus {
                 border: 1.5px solid #4A90E2;
             }
+            QComboBox QAbstractItemView {
+                background: white;
+                color: #222;
+                selection-background-color: #808080;
+                selection-color: #ffffff;
+                outline: 0;
+            }
         """
