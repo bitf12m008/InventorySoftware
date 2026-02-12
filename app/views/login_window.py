@@ -12,6 +12,7 @@ class LoginWindow(QWidget):
     def __init__(self, on_login_success):
         super().__init__()
         self.on_login_success = on_login_success
+        self.is_logging_in = False
         self.setup_ui()
 
     def setup_ui(self):
@@ -61,6 +62,7 @@ class LoginWindow(QWidget):
         self.username_input = QLineEdit()
         self.username_input.setPlaceholderText("Enter your username")
         self.username_input.setMinimumHeight(44)
+        self.username_input.setMaxLength(64)
         self.username_input.setStyleSheet("""
             QLineEdit {
                 padding: 8px 14px;
@@ -72,6 +74,8 @@ class LoginWindow(QWidget):
                 border: 1.4px solid #4A90E2;
             }
         """)
+        self.username_input.returnPressed.connect(self.password_input_focus)
+        self.username_input.textChanged.connect(self.clear_error)
         card_layout.addWidget(self.username_input)
 
         pass_label = QLabel("Password")
@@ -83,6 +87,7 @@ class LoginWindow(QWidget):
         self.password_input.setPlaceholderText("Enter your password")
         self.password_input.setEchoMode(QLineEdit.Password)
         self.password_input.setMinimumHeight(44)
+        self.password_input.setMaxLength(128)
         self.password_input.setStyleSheet("""
             QLineEdit {
                 padding: 8px 42px 8px 14px;
@@ -95,6 +100,7 @@ class LoginWindow(QWidget):
             }
         """)
         self.password_input.returnPressed.connect(self.handle_login)
+        self.password_input.textChanged.connect(self.clear_error)
 
         base_dir = os.path.dirname(os.path.abspath(__file__))
         assets_dir = os.path.join(base_dir, "..", "assets")
@@ -114,10 +120,17 @@ class LoginWindow(QWidget):
 
         card_layout.addWidget(self.password_input)
 
-        login_btn = QPushButton("Sign In")
-        login_btn.setMinimumHeight(46)
-        login_btn.setCursor(Qt.PointingHandCursor)
-        login_btn.setStyleSheet("""
+        self.error_label = QLabel("")
+        self.error_label.setFont(QFont("Segoe UI", 10))
+        self.error_label.setStyleSheet("color: #b42318;")
+        self.error_label.setWordWrap(True)
+        self.error_label.setVisible(False)
+        card_layout.addWidget(self.error_label)
+
+        self.login_btn = QPushButton("Sign In")
+        self.login_btn.setMinimumHeight(46)
+        self.login_btn.setCursor(Qt.PointingHandCursor)
+        self.login_btn.setStyleSheet("""
             QPushButton {
                 background: #4A90E2;
                 color: white;
@@ -128,11 +141,16 @@ class LoginWindow(QWidget):
             QPushButton:hover {
                 background: #3b7ac7;
             }
+            QPushButton:disabled {
+                background: #9bbce3;
+                color: #f4f7fb;
+            }
         """)
-        login_btn.clicked.connect(self.handle_login)
-        card_layout.addWidget(login_btn)
+        self.login_btn.clicked.connect(self.handle_login)
+        card_layout.addWidget(self.login_btn)
 
         main_layout.addWidget(card)
+        self.username_input.setFocus()
 
     def toggle_password_visibility(self):
         if self.password_input.echoMode() == QLineEdit.Password:
@@ -144,18 +162,49 @@ class LoginWindow(QWidget):
             self.eye_action.setIcon(self.eye_show_icon)
             self.eye_action.setToolTip("Show password")
 
-    def handle_login(self):
-        username = self.username_input.text().strip()
-        password = self.password_input.text().strip()
+    def password_input_focus(self):
+        self.password_input.setFocus()
 
-        if not username or not password:
-            QMessageBox.warning(self, "Error", "Please enter both username and password.")
+    def set_error(self, message):
+        self.error_label.setText(message)
+        self.error_label.setVisible(bool(message))
+
+    def clear_error(self):
+        self.set_error("")
+
+    def set_login_busy(self, busy):
+        self.is_logging_in = busy
+        self.login_btn.setDisabled(busy)
+        self.username_input.setDisabled(busy)
+        self.password_input.setDisabled(busy)
+        self.login_btn.setText("Signing In..." if busy else "Sign In")
+        self.setCursor(Qt.WaitCursor if busy else Qt.ArrowCursor)
+
+    def handle_login(self):
+        if self.is_logging_in:
             return
 
-        user = AuthController.login(username, password)
+        self.clear_error()
+        username = self.username_input.text().strip()
+        password = self.password_input.text()
 
+        if not username or not password:
+            self.set_error("Please enter both username and password.")
+            return
+
+        self.set_login_busy(True)
+        try:
+            user = AuthController.login(username, password)
+        except Exception as e:
+            self.set_error(f"Login error: {e}")
+            self.set_login_busy(False)
+            return
+
+        self.set_login_busy(False)
         if user:
             self.on_login_success(user)
             self.close()
         else:
-            QMessageBox.critical(self, "Login Failed", "Invalid username or password.")
+            self.set_error("Invalid username or password.")
+            self.password_input.selectAll()
+            self.password_input.setFocus()
