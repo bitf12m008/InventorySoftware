@@ -1,7 +1,8 @@
+import csv
 from PyQt5.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QComboBox,
     QTableWidget, QTableWidgetItem, QDateEdit, QPushButton,
-    QFrame, QGraphicsDropShadowEffect, QHeaderView
+    QFrame, QGraphicsDropShadowEffect, QHeaderView, QFileDialog, QMessageBox
 )
 from PyQt5.QtCore import QDate, Qt
 from PyQt5.QtGui import QFont, QColor
@@ -14,6 +15,7 @@ from app.views.sale_details_window import SaleDetailsWindow
 class ShowSalesWindow(QWidget):
     def __init__(self):
         super().__init__()
+        self.current_sales = []
 
         self.setWindowTitle("Sales History")
         self.resize(950, 550)
@@ -96,6 +98,23 @@ class ShowSalesWindow(QWidget):
         load_btn.clicked.connect(self.load_sales)
         f.addWidget(load_btn)
 
+        export_btn = QPushButton("Export CSV")
+        export_btn.setCursor(Qt.PointingHandCursor)
+        export_btn.setStyleSheet("""
+            QPushButton {
+                background: #2d9b5f;
+                color: white;
+                padding: 6px 18px;
+                border-radius: 8px;
+                font-weight: bold;
+            }
+            QPushButton:hover {
+                background: #247f4d;
+            }
+        """)
+        export_btn.clicked.connect(self.export_csv)
+        f.addWidget(export_btn)
+
         f.addStretch()
         main.addWidget(filters)
 
@@ -163,8 +182,14 @@ class ShowSalesWindow(QWidget):
 
         start = self.start_date.date().toString("yyyy-MM-dd")
         end = self.end_date.date().toString("yyyy-MM-dd")
+        if start > end:
+            QMessageBox.warning(self, "Invalid Date Range", "From date must be on or before To date.")
+            self.table.setRowCount(0)
+            self.current_sales = []
+            return
 
         sales = SaleModel.get_sales_by_shop_and_date(shop_id, start, end)
+        self.current_sales = sales
         self.table.setRowCount(len(sales))
 
         for row, sale in enumerate(sales):
@@ -176,3 +201,24 @@ class ShowSalesWindow(QWidget):
         sale_id = int(self.table.item(row, 0).text())
         self.details_window = SaleDetailsWindow(sale_id)
         self.details_window.show()
+
+    def export_csv(self):
+        if not self.current_sales:
+            QMessageBox.information(self, "No Data", "No sales data to export.")
+            return
+
+        path, _ = QFileDialog.getSaveFileName(
+            self, "Export Sales CSV", "sales_history.csv", "CSV Files (*.csv)"
+        )
+        if not path:
+            return
+
+        try:
+            with open(path, "w", newline="", encoding="utf-8") as f:
+                writer = csv.writer(f)
+                writer.writerow(["sale_id", "date", "grand_total"])
+                for sale in self.current_sales:
+                    writer.writerow([sale["sale_id"], sale["date"], f"{sale['grand_total']:.2f}"])
+            QMessageBox.information(self, "Export Complete", f"Saved CSV to:\n{path}")
+        except Exception as e:
+            QMessageBox.critical(self, "Export Failed", str(e))

@@ -16,6 +16,10 @@ class SaleController:
         return ProductModel.get_by_shop(shop_id)
 
     def add_to_cart(self, product_id, name, price, qty, stock):
+        if qty <= 0:
+            raise ValueError("Quantity must be greater than 0")
+        if price <= 0:
+            raise ValueError("Sale price must be greater than 0")
         if qty > stock:
             raise ValueError("Not enough stock")
 

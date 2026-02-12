@@ -130,6 +130,10 @@ class EditProductWindow(QWidget):
             QMessageBox.warning(self, "Error", "Product name is required.")
             return
 
+        if ProductModel.exists_name(new_name, exclude_product_id=self.product_id):
+            QMessageBox.warning(self, "Error", "A product with this name already exists.")
+            return
+
         ProductModel.update_name(self.product_id, new_name)
         QMessageBox.information(self, "Success", "Product updated successfully.")
         if self.on_success:

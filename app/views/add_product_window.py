@@ -7,6 +7,7 @@ from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont, QColor
 
 from app.controllers.product_controller import ProductController
+from app.models.product_model import ProductModel
 
 class AddProductWindow(QWidget):
     def __init__(self, on_success=None):
@@ -154,11 +155,19 @@ class AddProductWindow(QWidget):
             QMessageBox.warning(self, "Missing Name", "Please enter a product name.")
             return
 
+        if ProductModel.exists_name(name):
+            QMessageBox.warning(self, "Duplicate Name", "A product with this name already exists.")
+            return
+
         selected_shop_ids = []
         for i in range(self.shop_list.count()):
             checkbox = self.shop_list.itemWidget(self.shop_list.item(i))
             if checkbox.isChecked():
                 selected_shop_ids.append(checkbox.property("shop_id"))
+
+        if not selected_shop_ids:
+            QMessageBox.warning(self, "Missing Shops", "Select at least one shop.")
+            return
 
         self.controller.create_product(name, selected_shop_ids)
 

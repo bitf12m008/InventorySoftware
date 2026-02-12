@@ -33,6 +33,24 @@ class ProductModel:
         row = c.fetchone()
         conn.close()
         return row[0] if row else None
+
+    @staticmethod
+    def exists_name(name, exclude_product_id=None):
+        conn = get_connection()
+        c = conn.cursor()
+        if exclude_product_id is None:
+            c.execute(
+                "SELECT 1 FROM Products WHERE LOWER(name)=?",
+                (name.lower(),)
+            )
+        else:
+            c.execute(
+                "SELECT 1 FROM Products WHERE LOWER(name)=? AND product_id != ?",
+                (name.lower(), exclude_product_id)
+            )
+        exists = c.fetchone() is not None
+        conn.close()
+        return exists
     
     @staticmethod
     def get_by_shop(shop_id):
