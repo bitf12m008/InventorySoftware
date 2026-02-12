@@ -10,8 +10,9 @@ class SaleDetailsModel:
         cur = conn.cursor()
 
         cur.execute("""
-            SELECT sale_id, shop_id, date, grand_total
-            FROM Sales
+            SELECT s.sale_id, s.shop_id, sh.shop_name, s.date, s.grand_total
+            FROM Sales s
+            JOIN Shops sh ON sh.shop_id = s.shop_id
             WHERE sale_id = ?
         """, (sale_id,))
 
@@ -26,6 +27,7 @@ class SaleDetailsModel:
         return {
             "sale_id": row["sale_id"],
             "shop_id": row["shop_id"],
+            "shop_name": row["shop_name"],
             "date": dt.strftime("%B %d, %Y %I:%M %p"),
             "grand_total": row["grand_total"]
         }
