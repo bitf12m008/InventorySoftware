@@ -1,8 +1,9 @@
+import csv
 from PyQt5.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel,
     QComboBox, QDateEdit, QPushButton,
     QTableWidget, QTableWidgetItem, QMessageBox,
-    QFrame, QGraphicsDropShadowEffect, QHeaderView
+    QFrame, QGraphicsDropShadowEffect, QHeaderView, QFileDialog
 )
 from PyQt5.QtCore import QDate, Qt
 from PyQt5.QtGui import QFont, QColor
@@ -13,6 +14,7 @@ from app.models.weekly_profit_model import WeeklyProfitModel
 class WeeklyProfitWindow(QWidget):
     def __init__(self):
         super().__init__()
+        self.current_rows = []
 
         self.setWindowTitle("Weekly Profit Report")
         self.resize(950, 540)
@@ -48,6 +50,7 @@ class WeeklyProfitWindow(QWidget):
         f.addWidget(QLabel("Shop"))
         self.shop_combo = QComboBox()
         self.shop_combo.setMinimumWidth(200)
+        self.shop_combo.setMinimumHeight(36)
         f.addWidget(self.shop_combo)
 
         f.addWidget(QLabel("From"))
@@ -81,6 +84,23 @@ class WeeklyProfitWindow(QWidget):
         load_btn.clicked.connect(self.load_report)
         f.addWidget(load_btn)
 
+        export_btn = QPushButton("Export CSV")
+        export_btn.setCursor(Qt.PointingHandCursor)
+        export_btn.setStyleSheet("""
+            QPushButton {
+                background: #2d9b5f;
+                color: white;
+                padding: 6px 20px;
+                border-radius: 8px;
+                font-weight: bold;
+            }
+            QPushButton:hover {
+                background: #247f4d;
+            }
+        """)
+        export_btn.clicked.connect(self.export_csv)
+        f.addWidget(export_btn)
+
         f.addStretch()
         main.addWidget(filters)
 
@@ -94,6 +114,8 @@ class WeeklyProfitWindow(QWidget):
         ])
         self.table.setEditTriggers(self.table.NoEditTriggers)
         self.table.verticalHeader().setVisible(False)
+        self.table.setSelectionBehavior(self.table.SelectRows)
+        self.table.setSelectionMode(self.table.SingleSelection)
         self.table.setAlternatingRowColors(True)
 
         self.table.horizontalHeader().setSectionResizeMode(
@@ -105,6 +127,8 @@ class WeeklyProfitWindow(QWidget):
                 border: none;
                 font-size: 13px;
                 alternate-background-color: #f6f8fb;
+                selection-background-color: #dbeafe;
+                selection-color: #1f2937;
             }
             QHeaderView::section {
                 background: #f0f3f8;
@@ -113,6 +137,9 @@ class WeeklyProfitWindow(QWidget):
                 border: none;
             }
         """)
+        self.shop_combo.setStyleSheet(self._control_style())
+        self.start_date.setStyleSheet(self._control_style())
+        self.end_date.setStyleSheet(self._control_style())
 
         t.addWidget(self.table)
         main.addWidget(table_card, stretch=1)
@@ -131,6 +158,11 @@ class WeeklyProfitWindow(QWidget):
 
         start = self.start_date.date().toString("yyyy-MM-dd")
         end = self.end_date.date().toString("yyyy-MM-dd")
+        if start > end:
+            QMessageBox.warning(self, "Invalid Date Range", "From date must be on or before To date.")
+            self.table.setRowCount(0)
+            self.current_rows = []
+            return
 
         rows = WeeklyProfitModel.get_weekly_profit(
             shop_id, start, end
@@ -139,16 +171,50 @@ class WeeklyProfitWindow(QWidget):
         self.table.setRowCount(0)
 
         if not rows:
+            self.current_rows = []
             QMessageBox.information(self, "No Data", "No sales found")
             return
 
+        self.current_rows = rows
         self.table.setRowCount(len(rows))
 
         for i, r in enumerate(rows):
             self.table.setItem(i, 0, QTableWidgetItem(r["week"]))
-            self.table.setItem(i, 1, QTableWidgetItem(f"{r['total_sales']:.2f}"))
-            self.table.setItem(i, 2, QTableWidgetItem(f"{r['purchase_cost']:.2f}"))
-            self.table.setItem(i, 3, QTableWidgetItem(f"{r['profit']:.2f}"))
+            sales_item = QTableWidgetItem(f"{r['total_sales']:.2f}")
+            sales_item.setTextAlignment(Qt.AlignRight | Qt.AlignVCenter)
+            cost_item = QTableWidgetItem(f"{r['purchase_cost']:.2f}")
+            cost_item.setTextAlignment(Qt.AlignRight | Qt.AlignVCenter)
+            profit_item = QTableWidgetItem(f"{r['profit']:.2f}")
+            profit_item.setTextAlignment(Qt.AlignRight | Qt.AlignVCenter)
+            self.table.setItem(i, 1, sales_item)
+            self.table.setItem(i, 2, cost_item)
+            self.table.setItem(i, 3, profit_item)
+
+    def export_csv(self):
+        if not self.current_rows:
+            QMessageBox.information(self, "No Data", "No weekly data to export.")
+            return
+
+        path, _ = QFileDialog.getSaveFileName(
+            self, "Export Weekly Report CSV", "weekly_profit_report.csv", "CSV Files (*.csv)"
+        )
+        if not path:
+            return
+
+        try:
+            with open(path, "w", newline="", encoding="utf-8") as f:
+                writer = csv.writer(f)
+                writer.writerow(["week", "total_sales", "purchase_cost", "profit"])
+                for row in self.current_rows:
+                    writer.writerow([
+                        row["week"],
+                        f"{row['total_sales']:.2f}",
+                        f"{row['purchase_cost']:.2f}",
+                        f"{row['profit']:.2f}",
+                    ])
+            QMessageBox.information(self, "Export Complete", f"Saved CSV to:\n{path}")
+        except Exception as e:
+            QMessageBox.critical(self, "Export Failed", str(e))
 
     def _card(self):
         frame = QFrame()
@@ -164,3 +230,17 @@ class WeeklyProfitWindow(QWidget):
         shadow.setColor(QColor(0, 0, 0, 60))
         frame.setGraphicsEffect(shadow)
         return frame
+
+    def _control_style(self):
+        return """
+            QComboBox, QDateEdit {
+                padding: 6px 10px;
+                border-radius: 8px;
+                border: 1px solid #c9c9c9;
+                background: white;
+                font-size: 13px;
+            }
+            QComboBox:focus, QDateEdit:focus {
+                border: 1.5px solid #4A90E2;
+            }
+        """

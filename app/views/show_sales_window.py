@@ -67,17 +67,20 @@ class ShowSalesWindow(QWidget):
         self.shop_combo = QComboBox()
         self.shop_combo.setMinimumWidth(180)
         self.shop_combo.currentIndexChanged.connect(self.load_sales)
+        self.shop_combo.setMinimumHeight(36)
         f.addWidget(self.shop_combo)
 
         f.addWidget(QLabel("From"))
         self.start_date = QDateEdit(calendarPopup=True)
         self.start_date.setMinimumWidth(100)
+        self.start_date.setMinimumHeight(36)
         self.start_date.setDate(QDate.currentDate())
         f.addWidget(self.start_date)
 
         f.addWidget(QLabel("To"))
         self.end_date = QDateEdit(calendarPopup=True)
         self.end_date.setMinimumWidth(100)
+        self.end_date.setMinimumHeight(36)
         self.end_date.setDate(QDate.currentDate())
         f.addWidget(self.end_date)
 
@@ -134,16 +137,21 @@ class ShowSalesWindow(QWidget):
         self.table.setHorizontalHeaderLabels(["Sale ID", "Date", "Total"])
         self.table.setEditTriggers(self.table.NoEditTriggers)
         self.table.verticalHeader().setVisible(False)
+        self.table.setSelectionBehavior(self.table.SelectRows)
+        self.table.setSelectionMode(self.table.SingleSelection)
         self.table.setAlternatingRowColors(True)
         self.table.cellDoubleClicked.connect(self.open_sale_details)
-
-        self.table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+        self.table.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeToContents)
+        self.table.horizontalHeader().setSectionResizeMode(1, QHeaderView.Stretch)
+        self.table.horizontalHeader().setSectionResizeMode(2, QHeaderView.ResizeToContents)
 
         self.table.setStyleSheet("""
             QTableWidget {
                 border: none;
                 font-size: 13px;
                 alternate-background-color: #f6f8fb;
+                selection-background-color: #dbeafe;
+                selection-color: #1f2937;
             }
             QHeaderView::section {
                 background: #f0f3f8;
@@ -152,6 +160,9 @@ class ShowSalesWindow(QWidget):
                 border: none;
             }
         """)
+        self.shop_combo.setStyleSheet(self._control_style())
+        self.start_date.setStyleSheet(self._control_style())
+        self.end_date.setStyleSheet(self._control_style())
 
         t_layout.addWidget(self.table)
         main.addWidget(table_card, stretch=1)
@@ -195,7 +206,9 @@ class ShowSalesWindow(QWidget):
         for row, sale in enumerate(sales):
             self.table.setItem(row, 0, QTableWidgetItem(str(sale["sale_id"])))
             self.table.setItem(row, 1, QTableWidgetItem(sale["date"]))
-            self.table.setItem(row, 2, QTableWidgetItem(f"{sale['grand_total']:.2f}"))
+            total_item = QTableWidgetItem(f"{sale['grand_total']:.2f}")
+            total_item.setTextAlignment(Qt.AlignRight | Qt.AlignVCenter)
+            self.table.setItem(row, 2, total_item)
 
     def open_sale_details(self, row, col):
         sale_id = int(self.table.item(row, 0).text())
@@ -222,3 +235,17 @@ class ShowSalesWindow(QWidget):
             QMessageBox.information(self, "Export Complete", f"Saved CSV to:\n{path}")
         except Exception as e:
             QMessageBox.critical(self, "Export Failed", str(e))
+
+    def _control_style(self):
+        return """
+            QComboBox, QDateEdit {
+                padding: 6px 10px;
+                border-radius: 8px;
+                border: 1px solid #c9c9c9;
+                background: white;
+                font-size: 13px;
+            }
+            QComboBox:focus, QDateEdit:focus {
+                border: 1.5px solid #4A90E2;
+            }
+        """
