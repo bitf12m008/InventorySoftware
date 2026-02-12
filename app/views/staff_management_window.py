@@ -7,6 +7,7 @@ from PyQt5.QtGui import QFont, QColor
 
 from app.controllers.staff_controller import StaffController
 from app.views.add_staff_window import AddStaffWindow
+from app.views.staff_permissions_window import StaffPermissionsWindow
 from PyQt5.QtWidgets import QLineEdit
 
 class StaffManagementWindow(QWidget):
@@ -59,11 +60,14 @@ class StaffManagementWindow(QWidget):
         reset_btn = QPushButton("Reset Password")
         reset_btn.clicked.connect(self.reset_password)
 
+        permissions_btn = QPushButton("Permissions")
+        permissions_btn.clicked.connect(self.manage_permissions)
+
         delete_btn = QPushButton("Delete Staff")
         delete_btn.setStyleSheet("background:#d9534f;color:white;")
         delete_btn.clicked.connect(self.delete_staff)
 
-        for b in (add_btn, reset_btn, delete_btn):
+        for b in (add_btn, reset_btn, permissions_btn, delete_btn):
             b.setMinimumHeight(36)
             btn_row.addWidget(b)
 
@@ -129,3 +133,19 @@ class StaffManagementWindow(QWidget):
                 QMessageBox.information(self, "Success", "Password reset successfully.")
             except ValueError as e:
                 QMessageBox.warning(self, "Error", str(e))
+
+    def manage_permissions(self):
+        row = self.table.currentRow()
+        if row < 0:
+            QMessageBox.warning(self, "Select", "Select a staff member.")
+            return
+
+        staff_id = int(self.table.item(row, 0).text())
+        username = self.table.item(row, 1).text()
+        self.permissions_window = StaffPermissionsWindow(
+            staff_id=staff_id,
+            staff_username=username,
+            actor=self.actor,
+            on_success=self.load_staff,
+        )
+        self.permissions_window.show()

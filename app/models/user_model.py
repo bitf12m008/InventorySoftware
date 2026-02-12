@@ -6,8 +6,19 @@ from app.db.database_init import get_connection
 
 PBKDF2_ALGO = "pbkdf2_sha256"
 PBKDF2_ITERATIONS = 200_000
+STAFF_PERMISSION_KEYS = (
+    "add_sale",
+    "add_purchase",
+    "show_sales",
+    "view_profit_report",
+    "view_weekly_profit",
+)
+DEFAULT_STAFF_PERMISSIONS = ("add_sale", "show_sales")
 
 class UserModel:
+    STAFF_PERMISSION_KEYS = STAFF_PERMISSION_KEYS
+    DEFAULT_STAFF_PERMISSIONS = DEFAULT_STAFF_PERMISSIONS
+
     @staticmethod
     def hash_password(password: str) -> str:
         salt = secrets.token_hex(16)
@@ -70,12 +81,15 @@ class UserModel:
 
         conn.close()
 
-        return {
+        result = {
             "user_id": row["user_id"],
             "username": row["username"],
             "role": row["role"],
             "status": row["status"]
         }
+        if row["role"] == "staff":
+            result["permissions"] = UserModel.get_permissions(row["user_id"])
+        return result
 
     @staticmethod
     def create(username, password_hash, role):
@@ -170,3 +184,44 @@ class UserModel:
         row = cur.fetchone()
         conn.close()
         return row
+
+    @staticmethod
+    def get_permissions(user_id):
+        conn = get_connection()
+        cur = conn.cursor()
+        cur.execute(
+            """
+            SELECT permission_key
+            FROM StaffPermissions
+            WHERE user_id = ?
+            ORDER BY permission_key
+            """,
+            (user_id,)
+        )
+        rows = [r[0] for r in cur.fetchall()]
+        conn.close()
+        return rows
+
+    @staticmethod
+    def set_permissions(user_id, permissions):
+        valid = sorted(set(
+            p for p in permissions
+            if p in STAFF_PERMISSION_KEYS
+        ))
+        conn = get_connection()
+        cur = conn.cursor()
+        cur.execute(
+            "DELETE FROM StaffPermissions WHERE user_id = ?",
+            (user_id,)
+        )
+        if valid:
+            cur.executemany(
+                """
+                INSERT INTO StaffPermissions (user_id, permission_key)
+                VALUES (?, ?)
+                """,
+                [(user_id, p) for p in valid]
+            )
+        conn.commit()
+        conn.close()
+        return valid

@@ -9,7 +9,10 @@ from PyQt5.QtCore import Qt
 
 from app.controllers.dashboard_controller import DashboardController
 from app.views.add_sale_window import AddSaleWindow
+from app.views.add_purchase_window import AddPurchaseWindow
 from app.views.show_sales_window import ShowSalesWindow
+from app.views.profit_report_window import ProfitReportWindow
+from app.views.weekly_profit_window import WeeklyProfitWindow
 
 class StaffDashboard(QWidget):
     def __init__(self, user_info=None):
@@ -23,6 +26,10 @@ class StaffDashboard(QWidget):
 
         self.setup_ui()
         self.load_shops()
+
+    def has_permission(self, key):
+        permissions = self.user_info.get("permissions", [])
+        return key in permissions
 
     def setup_ui(self):
         main_layout = QVBoxLayout(self)
@@ -140,8 +147,16 @@ class StaffDashboard(QWidget):
         btn_row = QHBoxLayout()
         btn_row.setSpacing(14)
 
-        btn_row.addWidget(self.action_button("Add Sale", QStyle.SP_ArrowUp, self.add_sale))
-        btn_row.addWidget(self.action_button("Show Sales", QStyle.SP_FileIcon, self.open_show_sales))
+        if self.has_permission("add_sale"):
+            btn_row.addWidget(self.action_button("Add Sale", QStyle.SP_ArrowUp, self.add_sale))
+        if self.has_permission("add_purchase"):
+            btn_row.addWidget(self.action_button("Add Purchase", QStyle.SP_ArrowDown, self.add_purchase))
+        if self.has_permission("show_sales"):
+            btn_row.addWidget(self.action_button("Show Sales", QStyle.SP_FileIcon, self.open_show_sales))
+        if self.has_permission("view_profit_report"):
+            btn_row.addWidget(self.action_button("Profit Report", QStyle.SP_ComputerIcon, self.open_profit_report))
+        if self.has_permission("view_weekly_profit"):
+            btn_row.addWidget(self.action_button("Weekly Profit", QStyle.SP_ComputerIcon, self.open_weekly_profit))
 
         btn_row.addStretch()
         main_layout.addLayout(btn_row)
@@ -203,15 +218,45 @@ class StaffDashboard(QWidget):
 
 
     def add_sale(self):
+        if not self.has_permission("add_sale"):
+            QMessageBox.warning(self, "Access Denied", "You do not have permission to add sales.")
+            return
         self.sale_window = AddSaleWindow(
             on_success=self.reload_current_shop,
             actor=self.user_info
         )
         self.sale_window.show()
 
+    def add_purchase(self):
+        if not self.has_permission("add_purchase"):
+            QMessageBox.warning(self, "Access Denied", "You do not have permission to add purchases.")
+            return
+        self.purchase_window = AddPurchaseWindow(
+            on_success=self.reload_current_shop,
+            actor=self.user_info
+        )
+        self.purchase_window.show()
+
     def open_show_sales(self):
+        if not self.has_permission("show_sales"):
+            QMessageBox.warning(self, "Access Denied", "You do not have permission to view sales.")
+            return
         self.sales_window = ShowSalesWindow()
         self.sales_window.show()
+
+    def open_profit_report(self):
+        if not self.has_permission("view_profit_report"):
+            QMessageBox.warning(self, "Access Denied", "You do not have permission to view profit report.")
+            return
+        self.profit_window = ProfitReportWindow()
+        self.profit_window.show()
+
+    def open_weekly_profit(self):
+        if not self.has_permission("view_weekly_profit"):
+            QMessageBox.warning(self, "Access Denied", "You do not have permission to view weekly profit.")
+            return
+        self.weekly_window = WeeklyProfitWindow()
+        self.weekly_window.show()
 
 
 if __name__ == "__main__":

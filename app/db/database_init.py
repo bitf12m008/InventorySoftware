@@ -158,6 +158,21 @@ def initialize_database():
     ON AuditLogs(action)
     """)
 
+    # Staff permissions
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS StaffPermissions (
+        permission_id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER NOT NULL,
+        permission_key TEXT NOT NULL,
+        UNIQUE(user_id, permission_key),
+        FOREIGN KEY(user_id) REFERENCES Users(user_id)
+    )
+    """)
+    cursor.execute("""
+    CREATE INDEX IF NOT EXISTS idx_staff_permissions_user
+    ON StaffPermissions(user_id)
+    """)
+
     conn.commit()
 
     # default admin
@@ -176,6 +191,28 @@ def initialize_database():
         default_shops = ["Shop 1", "Shop 2", "Shop 3", "Shop 4"]
         for s in default_shops:
             cursor.execute("INSERT INTO Shops (shop_name) VALUES (?)", (s,))
+        conn.commit()
+
+    # backfill default staff permissions for existing staff users
+    cursor.execute("""
+        SELECT u.user_id
+        FROM Users u
+        LEFT JOIN StaffPermissions sp ON sp.user_id = u.user_id
+        WHERE u.role = 'staff'
+        GROUP BY u.user_id
+        HAVING COUNT(sp.permission_id) = 0
+    """)
+    staff_without_permissions = [r[0] for r in cursor.fetchall()]
+    for user_id in staff_without_permissions:
+        cursor.execute(
+            "INSERT OR IGNORE INTO StaffPermissions (user_id, permission_key) VALUES (?, ?)",
+            (user_id, "add_sale")
+        )
+        cursor.execute(
+            "INSERT OR IGNORE INTO StaffPermissions (user_id, permission_key) VALUES (?, ?)",
+            (user_id, "show_sales")
+        )
+    if staff_without_permissions:
         conn.commit()
 
     conn.close()

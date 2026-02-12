@@ -31,6 +31,10 @@ class StaffController:
             password_hash=password_hash,
             role="staff"
         )
+        UserModel.set_permissions(
+            created_user_id,
+            UserModel.DEFAULT_STAFF_PERMISSIONS
+        )
         AuditLogModel.log(
             action="USER_CREATE",
             entity_type="User",
@@ -38,6 +42,17 @@ class StaffController:
             user_id=self._actor_id(),
             username=self._actor_name(),
             details=f"Created staff account '{username}'",
+        )
+        AuditLogModel.log(
+            action="STAFF_PERMISSIONS_UPDATE",
+            entity_type="User",
+            entity_id=created_user_id,
+            user_id=self._actor_id(),
+            username=self._actor_name(),
+            details=(
+                "Default permissions: "
+                + ", ".join(UserModel.DEFAULT_STAFF_PERMISSIONS)
+            ),
         )
 
     def get_all_staff(self):
@@ -77,3 +92,30 @@ class StaffController:
 
     def _hash_password(self, password):
         return UserModel.hash_password(password)
+
+    def get_staff_permissions(self, staff_id):
+        return self.model.get_permissions(staff_id)
+
+    def get_permission_catalog(self):
+        return list(UserModel.STAFF_PERMISSION_KEYS)
+
+    def update_staff_permissions(self, staff_id, permissions):
+        target = self.model.get_by_id(staff_id)
+        if not target or target["role"] != "staff":
+            raise ValueError("Selected user is not staff.")
+
+        old = self.model.get_permissions(staff_id)
+        updated = self.model.set_permissions(staff_id, permissions)
+        target_name = target["username"]
+        AuditLogModel.log(
+            action="STAFF_PERMISSIONS_UPDATE",
+            entity_type="User",
+            entity_id=staff_id,
+            user_id=self._actor_id(),
+            username=self._actor_name(),
+            details=(
+                f"Permissions for '{target_name}' changed from "
+                f"[{', '.join(old)}] to [{', '.join(updated)}]"
+            ),
+        )
+        return updated
