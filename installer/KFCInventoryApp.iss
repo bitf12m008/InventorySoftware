@@ -15,7 +15,7 @@ AppVersion={#MyAppVersion}
 AppPublisher={#MyAppPublisher}
 DefaultDirName={localappdata}\KFCInventoryApp
 DisableProgramGroupPage=yes
-OutputDir=output
+OutputDir={#SourcePath}\..\output
 OutputBaseFilename=KFCInventoryAppSetup
 Compression=lzma
 SolidCompression=yes
@@ -30,7 +30,7 @@ SetupIconFile={#MyAppIcon}
 Name: "desktopicon"; Description: "Create a &desktop icon"; Flags: unchecked
 
 [Files]
-Source: "dist\KFCInventoryApp\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "{#SourcePath}\..\dist\KFCInventoryApp\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 
 [Icons]
 Name: "{autoprograms}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"
