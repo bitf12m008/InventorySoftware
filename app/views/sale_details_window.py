@@ -11,6 +11,7 @@ from PyQt5.QtPrintSupport import QPrinter, QPrintDialog
 
 from app.models.sale_details_model import SaleDetailsModel
 from app.models.receipt_model import ReceiptModel
+from app.db.database_init import get_data_dir
 
 class SaleDetailsWindow(QWidget):
     def __init__(self, sale_id):
@@ -288,9 +289,10 @@ class SaleDetailsWindow(QWidget):
             QMessageBox.warning(self, "Error", "Sale details are not loaded yet.")
             return
 
-        os.makedirs("receipts", exist_ok=True)
+        receipts_dir = os.path.join(get_data_dir(), "receipts")
+        os.makedirs(receipts_dir, exist_ok=True)
         default_name = f"invoice_{self.sale_id}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"
-        default_path = os.path.join("receipts", default_name)
+        default_path = os.path.join(receipts_dir, default_name)
         path, _ = QFileDialog.getSaveFileName(
             self, "Export Receipt PDF", default_path, "PDF Files (*.pdf)"
         )

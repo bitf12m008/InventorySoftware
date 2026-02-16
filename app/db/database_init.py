@@ -10,7 +10,13 @@ def get_base_path():
         return os.path.dirname(sys.executable)
     return os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-DB_DIR = os.path.join(get_base_path(), "database")
+def get_data_dir():
+    base = os.environ.get("LOCALAPPDATA") or os.environ.get("APPDATA")
+    if base:
+        return os.path.join(base, "KFCInventoryApp")
+    return os.path.join(get_base_path(), "data")
+
+DB_DIR = os.path.join(get_data_dir(), "database")
 DB_PATH = os.path.join(DB_DIR, "app.db")
 
 PBKDF2_ITERATIONS = 200_000
@@ -35,6 +41,8 @@ def get_connection(row_factory=None):
     return conn
 
 def initialize_database():
+    data_dir = get_data_dir()
+    os.makedirs(data_dir, exist_ok=True)
     os.makedirs(DB_DIR, exist_ok=True)
     conn = get_connection()
     cursor = conn.cursor()

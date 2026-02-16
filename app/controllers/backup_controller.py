@@ -2,11 +2,11 @@ import os
 import hashlib
 import datetime
 from shutil import copyfile
-from app.db.database_init import DB_PATH
+from app.db.database_init import DB_PATH, get_data_dir
 
 class BackupController:
-    BACKUP_DIR = "backups"
-    HASH_FILE = ".last_db_hash"
+    BACKUP_DIR = os.path.join(get_data_dir(), "backups")
+    HASH_FILE = os.path.join(get_data_dir(), ".last_db_hash")
 
     @classmethod
     def _calculate_db_hash(cls):
@@ -25,11 +25,13 @@ class BackupController:
 
     @classmethod
     def _save_last_hash(cls, db_hash):
+        os.makedirs(get_data_dir(), exist_ok=True)
         with open(cls.HASH_FILE, "w") as f:
             f.write(db_hash)
 
     @classmethod
     def backup_forced(cls):
+        os.makedirs(get_data_dir(), exist_ok=True)
         if not os.path.exists(cls.BACKUP_DIR):
             os.makedirs(cls.BACKUP_DIR)
 
@@ -42,6 +44,7 @@ class BackupController:
     
     @classmethod
     def backup_if_changed(cls):
+        os.makedirs(get_data_dir(), exist_ok=True)
         current_hash = cls._calculate_db_hash()
         last_hash = cls._load_last_hash()
 

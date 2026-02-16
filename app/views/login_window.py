@@ -1,4 +1,5 @@
 import os
+from app.utils.resource_paths import get_assets_dir
 from PyQt5.QtWidgets import (
     QWidget, QLabel, QLineEdit, QPushButton,
     QVBoxLayout, QMessageBox, QFrame,
@@ -102,8 +103,7 @@ class LoginWindow(QWidget):
         self.password_input.returnPressed.connect(self.handle_login)
         self.password_input.textChanged.connect(self.clear_error)
 
-        base_dir = os.path.dirname(os.path.abspath(__file__))
-        assets_dir = os.path.join(base_dir, "..", "assets")
+        assets_dir = get_assets_dir()
 
         self.eye_show_icon = QIcon(os.path.join(assets_dir, "view.png"))
         self.eye_hide_icon = QIcon(os.path.join(assets_dir, "hide.png"))

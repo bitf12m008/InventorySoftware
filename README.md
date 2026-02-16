@@ -19,7 +19,37 @@ python -m app.main
 
 ---
 
-## 2. `requirements.txt`
+## 2. Building a Windows Installer (GUI, One-Click)
+
+This app stores its database, backups, and receipts in `%LOCALAPPDATA%\\KFCInventoryApp`, so it can be installed under Program Files without write-permission errors. The installer still defaults to `%LOCALAPPDATA%\\KFCInventoryApp` to avoid requiring admin privileges. The installer now creates a fresh, empty database on first run.
+
+### Prerequisites (Windows)
+
+1. Activate your venv and install PyInstaller:
+
+```bash
+pip install pyinstaller
+```
+
+2. Install Inno Setup and ensure `ISCC.exe` is in your `PATH`.
+
+### Build
+
+```powershell
+.\scripts\build_installer.ps1
+```
+
+Outputs:
+1. PyInstaller build folder: `dist\KFCInventoryApp`
+2. Installer EXE: `output\KFCInventoryAppSetup.exe`
+
+### App Icon (Optional)
+
+Put a Windows `.ico` file at `app\assets\app.ico`. The build script and installer will use it automatically.
+
+---
+
+## 3. `requirements.txt`
 
 The `requirements.txt` file lists all external Python packages your project depends on, along with optional version specifications. It ensures consistency across environments and simplifies setup.
 
@@ -47,7 +77,7 @@ Keep `requirements.txt` updated whenever you add new packages to your project to
 
 ---
 
-## 3. Generating `requirements.txt` Automatically
+## 4. Generating `requirements.txt` Automatically
 
 If you add new packages or want to capture all dependencies used in your project:
 

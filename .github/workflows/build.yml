@@ -1,4 +1,4 @@
-name: Build Windows EXE
+name: Build Windows Installer
 
 on:
   push:
@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  build-exe:
+  build-installer:
     runs-on: windows-latest
 
     steps:
@@ -25,12 +25,16 @@ jobs:
         pip install -r requirements.txt
         pip install pyinstaller
 
-    - name: Build Executable
+    - name: Install Inno Setup
       run: |
-        pyinstaller --onefile --name inventory_app --paths=./app app/main.py
+        choco install innosetup -y
+
+    - name: Build Installer
+      run: |
+        powershell -ExecutionPolicy Bypass -File .\scripts\build_installer.ps1
 
     - name: Upload Artifact
       uses: actions/upload-artifact@v4
       with:
-        name: windows-exe
-        path: dist/inventory_app.exe
+        name: windows-installer
+        path: output/KFCInventoryAppSetup.exe

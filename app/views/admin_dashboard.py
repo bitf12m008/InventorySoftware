@@ -1,5 +1,6 @@
 import sys
 import os
+from app.utils.resource_paths import get_assets_dir
 from PyQt5.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
     QComboBox, QTableWidget, QTableWidgetItem, QMessageBox,
@@ -92,8 +93,7 @@ class AdminDashboard(QWidget):
         self.search_btn = QToolButton()
         icon = QIcon.fromTheme("edit-find")
         if icon.isNull():
-            base_dir = os.path.dirname(os.path.abspath(__file__))
-            assets_dir = os.path.join(base_dir, "..", "assets")
+            assets_dir = get_assets_dir()
             icon = QIcon(os.path.join(assets_dir, "search.png"))
 
         self.search_btn.setIcon(icon)
