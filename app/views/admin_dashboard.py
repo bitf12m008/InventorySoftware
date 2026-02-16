@@ -20,6 +20,7 @@ from app.views.profit_report_window import ProfitReportWindow
 from app.views.weekly_profit_window import WeeklyProfitWindow
 from app.views.staff_management_window import StaffManagementWindow
 from app.views.audit_log_window import AuditLogWindow
+from app.views.shop_management_window import ShopManagementWindow
 from app.controllers.backup_controller import BackupController
 
 class AdminDashboard(QWidget):
@@ -127,6 +128,11 @@ class AdminDashboard(QWidget):
         refresh_btn = self.action_button("Refresh", QStyle.SP_BrowserReload)
         refresh_btn.clicked.connect(self.reload_current_shop)
         header_layout.addWidget(refresh_btn)
+
+        if self.user_info.get("role") == "admin":
+            shops_btn = self.action_button("Manage Shops", QStyle.SP_DirIcon)
+            shops_btn.clicked.connect(self.open_shop_management)
+            header_layout.addWidget(shops_btn)
 
         backup_btn = self.action_button("Backup", QStyle.SP_DriveHDIcon)
         backup_btn.clicked.connect(self.backup_db)
@@ -387,6 +393,10 @@ class AdminDashboard(QWidget):
     def open_audit_logs(self):
         self.audit_window = AuditLogWindow()
         self.audit_window.show()
+
+    def open_shop_management(self):
+        self.shop_management_window = ShopManagementWindow(on_updated=self.load_shops)
+        self.shop_management_window.exec_()
 
     def backup_db(self):
         try:
